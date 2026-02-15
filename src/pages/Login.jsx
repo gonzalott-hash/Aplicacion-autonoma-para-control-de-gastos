@@ -11,23 +11,44 @@ const Login = () => {
     const signIn = useAuthStore((state) => state.signIn);
     const navigate = useNavigate();
 
+    const [fullName, setFullName] = useState('');
+    const [isRegistering, setIsRegistering] = useState(false); // Toggle state
+
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         try {
-            const { role } = await signIn(email, password);
+            if (isRegistering) {
+                // Registration Logic
+                const { data, error } = await import('../lib/supabase').then(m => m.supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            full_name: fullName,
+                        },
+                    },
+                }));
 
-            if (role === 'owner') {
-                navigate('/owner-expense');
-            } else if (role === 'user') {
-                navigate('/user-expense');
+                if (error) throw error;
+
+                alert('Registro exitoso. Por favor inicie sesión.');
+                setIsRegistering(false); // Switch back to login
             } else {
-                // Fallback or handle unknown role
-                navigate('/user-expense');
+                // Login Logic
+                const { role } = await signIn(email, password);
+
+                if (role === 'owner') {
+                    navigate('/owner-settings');
+                } else if (role === 'user') {
+                    navigate('/user-expense');
+                } else {
+                    navigate('/user-expense');
+                }
             }
         } catch (err) {
-            setError(err.message || 'Error al iniciar sesión');
+            setError(err.message || 'Error en autenticación');
         } finally {
             setLoading(false);
         }
@@ -57,6 +78,45 @@ const Login = () => {
                             {error}
                         </div>
                     )}
+
+                    {/* Toggle Login/Register */}
+                    <div className="flex bg-slate-100 dark:bg-neutral-dark p-1 rounded-xl mb-6">
+                        <button
+                            type="button"
+                            onClick={() => setIsRegistering(false)}
+                            className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${!isRegistering ? 'bg-white dark:bg-slate-700 shadow text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        >
+                            Ingresar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsRegistering(true)}
+                            className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isRegistering ? 'bg-white dark:bg-slate-700 shadow text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                        >
+                            Registrarse
+                        </button>
+                    </div>
+
+                    {isRegistering && (
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1" htmlFor="fullName">
+                                Nombre Completo
+                            </label>
+                            <div className="relative group">
+                                <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">badge</span>
+                                <input
+                                    className="w-full pl-12 pr-4 py-4 bg-white dark:bg-neutral-dark border-transparent dark:border-neutral-border focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary rounded-xl transition-all outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
+                                    id="fullName"
+                                    placeholder="Tu nombre"
+                                    type="text"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    required={isRegistering}
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-2">
                         <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1" htmlFor="email">
                             Correo electrónico
@@ -80,7 +140,7 @@ const Login = () => {
                             <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" htmlFor="password">
                                 Contraseña
                             </label>
-                            <a className="text-xs font-medium text-primary hover:text-primary/80" href="#">¿Olvidó su clave?</a>
+                            {!isRegistering && <a className="text-xs font-medium text-primary hover:text-primary/80" href="#">¿Olvidó su clave?</a>}
                         </div>
                         <div className="relative group">
                             <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">lock</span>
@@ -108,7 +168,7 @@ const Login = () => {
                         type="submit"
                         disabled={loading}
                     >
-                        {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+                        {loading ? 'Procesando...' : (isRegistering ? 'Crear Cuenta' : 'Iniciar sesión')}
                     </button>
                 </form>
 

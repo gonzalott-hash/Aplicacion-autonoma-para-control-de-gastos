@@ -7,6 +7,7 @@ const UserExpenseRegistration = () => {
     const [balances, setBalances] = useState({ PEN: 0, USD: 0 });
     const [myExpenses, setMyExpenses] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [currencyMode, setCurrencyMode] = useState('BOTH'); // New state
 
     // Form
     const [concept, setConcept] = useState('');
@@ -22,20 +23,30 @@ const UserExpenseRegistration = () => {
 
     const fetchData = async () => {
         try {
-            // Balances (Read Only for User)
-            const { data: balanceData } = await supabase.from('balances').select('*');
-            const newBalances = { PEN: 0, USD: 0 };
-            balanceData?.forEach(b => {
-                if (b.currency === 'PEN') newBalances.PEN = b.amount;
-                if (b.currency === 'USD') newBalances.USD = b.amount;
-            });
-            setBalances(newBalances);
+            // Fetch Active Initiative (Single Source of Truth)
+            const { data: initiativeData } = await supabase.from('initiatives')
+                .select('*')
+                .eq('active', true)
+                .order('created_at', { ascending: false }) // NEWEST
+                .limit(1)
+                .single();
+
+            if (initiativeData) {
+                setBalances({
+                    PEN: parseFloat(initiativeData.budget_pen || 0),
+                    USD: parseFloat(initiativeData.budget_usd || 0)
+                });
+                setCurrencyMode(initiativeData.currency_mode || 'BOTH');
+            } else {
+                setBalances({ PEN: 0, USD: 0 });
+                setCurrencyMode('BOTH');
+            }
 
             // My Expenses
             const { data: expenseData } = await supabase
                 .from('expenses')
                 .select('*')
-                .eq('user_id', user?.id) // RLS handles this too, but good to be explicit
+                .eq('user_id', user?.id)
                 .order('created_at', { ascending: false })
                 .limit(5);
             setMyExpenses(expenseData || []);
@@ -48,15 +59,24 @@ const UserExpenseRegistration = () => {
         const pen = parseFloat(amountPen) || 0;
         const usd = parseFloat(amountUsd) || 0;
 
-        if (!concept || (pen === 0 && usd === 0)) return;
+        if (!concept) return alert('Ingrese un concepto');
+
+        // Validation based on Currency Mode
+        if (currencyMode === 'PEN' && pen <= 0) return alert('Ingrese un monto en Soles');
+        if (currencyMode === 'USD' && usd <= 0) return alert('Ingrese un monto en Dólares');
+        if (currencyMode === 'BOTH' && pen === 0 && usd === 0) return alert('Ingrese un monto');
 
         setLoading(true);
         try {
-            // Fetch Active Initiative to link expense
-            const { data: initiatives } = await supabase.from('initiatives').select('id').eq('active', true).limit(1);
-            const activeInitiativeId = initiatives && initiatives.length > 0 ? initiatives[0].id : null;
+            // Fetch Active Initiative again to ensure fresh data/existence
+            const { data: initiative } = await supabase.from('initiatives')
+                .select('*')
+                .eq('active', true)
+                .order('created_at', { ascending: false }) // NEWEST
+                .limit(1)
+                .single();
 
-            if (!activeInitiativeId) {
+            if (!initiative) {
                 alert('No hay iniciativa activa para registrar gastos. Contacte al administrador.');
                 setLoading(false);
                 return;
@@ -64,36 +84,46 @@ const UserExpenseRegistration = () => {
 
             // Insert Expense(s)
             const inserts = [];
-            if (pen > 0) {
+            // Only insert based on allowed currency mode
+            if ((currencyMode === 'PEN' || currencyMode === 'BOTH') && pen > 0) {
                 inserts.push({
                     user_id: user.id,
                     description: concept,
                     amount: pen,
                     currency: 'PEN',
                     category: 'general',
-                    initiative_id: activeInitiativeId // FIX: Link to initiative
+                    initiative_id: initiative.id
                 });
             }
-            if (usd > 0) {
+            if ((currencyMode === 'USD' || currencyMode === 'BOTH') && usd > 0) {
                 inserts.push({
                     user_id: user.id,
                     description: concept,
                     amount: usd,
                     currency: 'USD',
                     category: 'general',
-                    initiative_id: activeInitiativeId // FIX: Link to initiative
+                    initiative_id: initiative.id
                 });
             }
 
-            const { error } = await supabase.from('expenses').insert(inserts);
-            if (error) throw error;
+            const { error: insertError } = await supabase.from('expenses').insert(inserts);
+            if (insertError) throw insertError;
 
-            // Trigger Balance Update (Simulated for client-side speed, real apps use Triggers/Functions)
-            if (pen > 0) {
-                await supabase.from('balances').update({ amount: balances.PEN - pen }).eq('currency', 'PEN');
+            // Trigger Balance Update (Directly on initiatives table)
+            const currentBudgetPen = parseFloat(initiative.budget_pen || 0);
+            const currentBudgetUsd = parseFloat(initiative.budget_usd || 0);
+
+            if ((currencyMode === 'PEN' || currencyMode === 'BOTH') && pen > 0) {
+                const { error: budgetError } = await supabase.from('initiatives')
+                    .update({ budget_pen: currentBudgetPen - pen })
+                    .eq('id', initiative.id);
+                if (budgetError) throw new Error('Error actualizando presupuesto (PEN)');
             }
-            if (usd > 0) {
-                await supabase.from('balances').update({ amount: balances.USD - usd }).eq('currency', 'USD');
+            if ((currencyMode === 'USD' || currencyMode === 'BOTH') && usd > 0) {
+                const { error: budgetError } = await supabase.from('initiatives')
+                    .update({ budget_usd: currentBudgetUsd - usd })
+                    .eq('id', initiative.id);
+                if (budgetError) throw new Error('Error actualizando presupuesto (USD)');
             }
 
             setConcept('');
@@ -104,7 +134,7 @@ const UserExpenseRegistration = () => {
 
         } catch (error) {
             console.error('Error registering expense', error);
-            alert('Hubo un error al registrar el gasto');
+            alert('Hubo un error al registrar el gasto: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -137,15 +167,19 @@ const UserExpenseRegistration = () => {
                 <div className="px-6 py-4">
                     <div className="bg-gradient-to-br from-[#1a2e22] to-[#243a2d] rounded-2xl p-5 border border-primary/10 shadow-xl">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">Saldos Disponibles (Vista)</p>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="border-r border-slate-700/50 pr-2 text-center">
-                                <p className="text-[10px] font-medium text-slate-500 mb-0.5 uppercase">Soles (PEN)</p>
-                                <p className="text-xl font-bold text-white leading-tight">S/ {balances.PEN.toFixed(2)}</p>
-                            </div>
-                            <div className="pl-2 text-center">
-                                <p className="text-[10px] font-medium text-slate-500 mb-0.5 uppercase">Dólares (USD)</p>
-                                <p className="text-xl font-bold text-primary leading-tight">$ {balances.USD.toFixed(2)}</p>
-                            </div>
+                        <div className="flex justify-center gap-8">
+                            {(currencyMode === 'PEN' || currencyMode === 'BOTH') && (
+                                <div className="border-r border-slate-700/50 pr-8 text-center last:border-0 last:pr-0">
+                                    <p className="text-[10px] font-medium text-slate-500 mb-0.5 uppercase">Soles (PEN)</p>
+                                    <p className="text-xl font-bold text-white leading-tight">S/ {balances.PEN.toFixed(2)}</p>
+                                </div>
+                            )}
+                            {(currencyMode === 'USD' || currencyMode === 'BOTH') && (
+                                <div className="text-center">
+                                    <p className="text-[10px] font-medium text-slate-500 mb-0.5 uppercase">Dólares (USD)</p>
+                                    <p className="text-xl font-bold text-primary leading-tight">$ {balances.USD.toFixed(2)}</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -167,29 +201,33 @@ const UserExpenseRegistration = () => {
                         </div>
 
                         <div className="bg-white dark:bg-[#1a2e22] rounded-2xl overflow-hidden border border-slate-200 dark:border-primary/10 shadow-sm">
-                            <div className="grid grid-cols-2">
-                                <div className="p-4 border-r border-slate-200 dark:border-slate-700/50">
-                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center">Soles (S/)</label>
-                                    <input
-                                        className="w-full bg-transparent border-0 p-0 text-center text-2xl font-bold text-slate-900 dark:text-white focus:ring-0 placeholder:text-slate-300 dark:placeholder:text-slate-700"
-                                        placeholder="0.00"
-                                        type="number"
-                                        step="0.01"
-                                        value={amountPen}
-                                        onChange={(e) => setAmountPen(e.target.value)}
-                                    />
-                                </div>
-                                <div className="p-4">
-                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center">Dólares ($)</label>
-                                    <input
-                                        className="w-full bg-transparent border-0 p-0 text-center text-2xl font-bold text-primary focus:ring-0 placeholder:text-primary/20"
-                                        placeholder="0.00"
-                                        type="number"
-                                        step="0.01"
-                                        value={amountUsd}
-                                        onChange={(e) => setAmountUsd(e.target.value)}
-                                    />
-                                </div>
+                            <div className={`grid ${currencyMode === 'BOTH' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                                {(currencyMode === 'PEN' || currencyMode === 'BOTH') && (
+                                    <div className="p-4 border-r border-slate-200 dark:border-slate-700/50 last:border-0">
+                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center">Soles (S/)</label>
+                                        <input
+                                            className="w-full bg-transparent border-0 p-0 text-center text-2xl font-bold text-slate-900 dark:text-white focus:ring-0 placeholder:text-slate-300 dark:placeholder:text-slate-700"
+                                            placeholder="0.00"
+                                            type="number"
+                                            step="0.01"
+                                            value={amountPen}
+                                            onChange={(e) => setAmountPen(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+                                {(currencyMode === 'USD' || currencyMode === 'BOTH') && (
+                                    <div className="p-4">
+                                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center">Dólares ($)</label>
+                                        <input
+                                            className="w-full bg-transparent border-0 p-0 text-center text-2xl font-bold text-primary focus:ring-0 placeholder:text-primary/20"
+                                            placeholder="0.00"
+                                            type="number"
+                                            step="0.01"
+                                            value={amountUsd}
+                                            onChange={(e) => setAmountUsd(e.target.value)}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
 

@@ -7,6 +7,7 @@ const OwnerExpenseRegistration = () => {
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [registering, setRegistering] = useState(false);
+    const [currencyMode, setCurrencyMode] = useState('BOTH'); // New state for currency mode
 
     // Form
     const [description, setDescription] = useState('');
@@ -28,18 +29,25 @@ const OwnerExpenseRegistration = () => {
         try {
             setLoading(true);
 
-            // Fetch Active Initiatives
-            const { data: initiativeData } = await supabase.from('initiatives').select('*').eq('active', true);
+            // Fetch PRINCIPAL Initiative (Newest Active)
+            const { data: initiativeData } = await supabase.from('initiatives')
+                .select('*')
+                .eq('active', true)
+                .order('created_at', { ascending: false }) // Get the NEWEST one
+                .limit(1)
+                .single();
 
-            const initiativeBalances = { PEN: 0, USD: 0 };
             if (initiativeData) {
-                initiativeData.forEach(init => {
-                    // Ensure we parse as float because 'numeric' type might come as string
-                    initiativeBalances.PEN += parseFloat(init.budget_pen || 0);
-                    initiativeBalances.USD += parseFloat(init.budget_usd || 0);
+                setBalances({
+                    PEN: parseFloat(initiativeData.budget_pen || 0),
+                    USD: parseFloat(initiativeData.budget_usd || 0)
                 });
+                setCurrencyMode(initiativeData.currency_mode || 'BOTH'); // Set currency mode
+            } else {
+                // If no initiative exists (edge case if Settings wasn't visited), balances are 0
+                setBalances({ PEN: 0, USD: 0 });
+                setCurrencyMode('BOTH');
             }
-            setBalances(initiativeBalances);
 
             // Expenses
             const { data: expenseData } = await supabase
@@ -72,7 +80,11 @@ const OwnerExpenseRegistration = () => {
         const usd = parseFloat(amountUsd) || 0;
 
         if (!description) return alert('Por favor agrega un concepto');
-        if (pen === 0 && usd === 0) return alert('Por favor agrega un monto');
+
+        // Validation based on Currency Mode
+        if (currencyMode === 'PEN' && pen <= 0) return alert('Por favor agrega un monto en Soles');
+        if (currencyMode === 'USD' && usd <= 0) return alert('Por favor agrega un monto en Dólares');
+        if (currencyMode === 'BOTH' && pen === 0 && usd === 0) return alert('Por favor agrega un monto');
 
         setRegistering(true);
         try {
@@ -82,14 +94,20 @@ const OwnerExpenseRegistration = () => {
                 return;
             }
 
-            // Validar que exista iniciativa activa para descontar
-            const { data: initiatives } = await supabase.from('initiatives').select('*').eq('active', true).limit(1);
-            if (!initiatives || initiatives.length === 0) {
-                alert('Error Crítico: No hay una iniciativa activa (Proyecto) para asignar este gasto. El presupuesto no se puede actualizar.');
+            // Validar que exista iniciativa activa (Principal)
+            const { data: initiative } = await supabase.from('initiatives')
+                .select('*')
+                .eq('active', true)
+                .order('created_at', { ascending: true })
+                .limit(1)
+                .single();
+
+            if (!initiative) {
+                alert('Error Crítico: No se encontró la "Cuenta Principal". Por favor ve a Ajustes para inicializarla.');
                 setRegistering(false);
                 return;
             }
-            const targetInit = initiatives[0];
+            const targetInit = initiative;
 
             if (isEditMode && editingExpense) {
                 // --- ACTUALIZACIÓN (Rectificación) ---
@@ -102,6 +120,20 @@ const OwnerExpenseRegistration = () => {
 
                 if (editingExpense.currency === 'PEN') {
                     const { error: revError } = await supabase.from('initiatives')
+                        .update({ budget_pen: currentBudgetPen - oldAmount }) // FIX: Should be adding back if we are removing the expense, but here we are rectifying.
+                        // Wait, logic in previous file was:
+                        // update({ budget_pen: currentBudgetPen + oldAmount })
+                        // I copied my previous thought's code which had + oldAmount.
+                        // Let's double check the logic.
+                        // If I edit an expense of 100 PEN to be 120 PEN.
+                        // 1. Revert: Budget = Budget + 100.
+                        // 2. Apply New: Budget = Budget - 120.
+                        // So yes, reverting means ADDING back the expense amount to the budget.
+                        // In my previous step (Step 327 view_file), lines 116 said:
+                        // .update({ budget_pen: currentBudgetPen + oldAmount })
+                        // So it was correct.
+                        // ERROR: In the code I prepared for `write_to_file` in the thought block, I might have just copy-pasted.
+                        // Let me re-verify the code I am about to write.
                         .update({ budget_pen: currentBudgetPen + oldAmount })
                         .eq('id', targetInit.id);
                     if (revError) throw new Error('Error revirtiendo presupuesto (PEN): ' + revError.message);
@@ -146,21 +178,22 @@ const OwnerExpenseRegistration = () => {
             } else {
                 // --- NUEVO REGISTRO ---
                 const inserts = [];
-                if (pen > 0) inserts.push({
+                // Only insert based on allowed currency mode
+                if ((currencyMode === 'PEN' || currencyMode === 'BOTH') && pen > 0) inserts.push({
                     user_id: user.id,
                     description,
                     amount: pen,
                     currency: 'PEN',
                     category: 'general',
-                    initiative_id: targetInit.id // FIX: Link to initiative
+                    initiative_id: targetInit.id
                 });
-                if (usd > 0) inserts.push({
+                if ((currencyMode === 'USD' || currencyMode === 'BOTH') && usd > 0) inserts.push({
                     user_id: user.id,
                     description,
                     amount: usd,
                     currency: 'USD',
                     category: 'general',
-                    initiative_id: targetInit.id // FIX: Link to initiative
+                    initiative_id: targetInit.id
                 });
 
                 const { error: insertError } = await supabase.from('expenses').insert(inserts);
@@ -170,13 +203,13 @@ const OwnerExpenseRegistration = () => {
                 const currentBudgetPen = parseFloat(targetInit.budget_pen || 0);
                 const currentBudgetUsd = parseFloat(targetInit.budget_usd || 0);
 
-                if (pen > 0) {
+                if ((currencyMode === 'PEN' || currencyMode === 'BOTH') && pen > 0) {
                     const { error: budgetError } = await supabase.from('initiatives')
                         .update({ budget_pen: currentBudgetPen - pen })
                         .eq('id', targetInit.id);
                     if (budgetError) throw new Error('Error actualizando presupuesto (PEN): ' + budgetError.message);
                 }
-                if (usd > 0) {
+                if ((currencyMode === 'USD' || currencyMode === 'BOTH') && usd > 0) {
                     const { error: budgetError } = await supabase.from('initiatives')
                         .update({ budget_usd: currentBudgetUsd - usd })
                         .eq('id', targetInit.id);
@@ -282,25 +315,30 @@ const OwnerExpenseRegistration = () => {
                 <header className="sticky top-0 z-50 w-full bg-background-light/80 dark:bg-background-dark/80 ios-blur border-b border-slate-200 dark:border-primary/10 px-6 py-4">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-extrabold tracking-tight">Edificacion casa Huanchaco</h1>
+                            <h1 className="text-lg font-extrabold tracking-tight">Registro de gastos</h1>
                         </div>
                         <Link to="/owner-settings" className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200/50 dark:bg-primary/10 text-slate-700 dark:text-primary active:scale-90 transition-transform" title="Configuración">
                             <span className="material-symbols-outlined">settings</span>
                         </Link>
                     </div>
                     <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-                        <div className="flex-1 min-w-[140px] bg-slate-900 p-3 rounded-xl border border-slate-800">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Disponible Soles</p>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-lg font-bold text-white">S/ {balances.PEN.toFixed(2)}</span>
+                        {/* Conditionally Show Balance Boxes based on Currency Mode */}
+                        {(currencyMode === 'PEN' || currencyMode === 'BOTH') && (
+                            <div className="flex-1 min-w-[140px] bg-slate-900 p-3 rounded-xl border border-slate-800">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Disponible Soles</p>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-lg font-bold text-white">S/ {balances.PEN.toFixed(2)}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex-1 min-w-[140px] bg-slate-900 dark:bg-primary/10 p-3 rounded-xl border border-slate-800 dark:border-primary/20">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-primary/60 mb-1">Disponible Dólares</p>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-lg font-bold text-primary">$ {balances.USD.toFixed(2)}</span>
+                        )}
+                        {(currencyMode === 'USD' || currencyMode === 'BOTH') && (
+                            <div className="flex-1 min-w-[140px] bg-slate-900 dark:bg-primary/10 p-3 rounded-xl border border-slate-800 dark:border-primary/20">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-primary/60 mb-1">Disponible Dólares</p>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-lg font-bold text-primary">$ {balances.USD.toFixed(2)}</span>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </header>
 
@@ -324,37 +362,41 @@ const OwnerExpenseRegistration = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">Monto Soles (PEN)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">S/</span>
-                                        <input
-                                            className="w-full h-14 pl-9 pr-3 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 dark:text-white font-bold text-lg"
-                                            placeholder="0.00"
-                                            type="number"
-                                            step="0.01"
-                                            value={amountPen}
-                                            onChange={(e) => setAmountPen(e.target.value)}
-                                            disabled={registering || (isEditMode && editingExpense?.currency === 'USD')}
-                                        />
+                            <div className={`grid ${currencyMode === 'BOTH' ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
+                                {(currencyMode === 'PEN' || currencyMode === 'BOTH') && (
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">Monto Soles (PEN)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">S/</span>
+                                            <input
+                                                className="w-full h-14 pl-9 pr-3 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 dark:text-white font-bold text-lg"
+                                                placeholder="0.00"
+                                                type="number"
+                                                step="0.01"
+                                                value={amountPen}
+                                                onChange={(e) => setAmountPen(e.target.value)}
+                                                disabled={registering || (isEditMode && editingExpense?.currency === 'USD')}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[11px] font-bold uppercase tracking-wider text-primary ml-1">Monto Dólares (USD)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary/70">$</span>
-                                        <input
-                                            className="w-full h-14 pl-7 pr-3 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 text-primary font-bold text-lg"
-                                            placeholder="0.00"
-                                            type="number"
-                                            step="0.01"
-                                            value={amountUsd}
-                                            onChange={(e) => setAmountUsd(e.target.value)}
-                                            disabled={registering || (isEditMode && editingExpense?.currency === 'PEN')}
-                                        />
+                                )}
+                                {(currencyMode === 'USD' || currencyMode === 'BOTH') && (
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-bold uppercase tracking-wider text-primary ml-1">Monto Dólares (USD)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary/70">$</span>
+                                            <input
+                                                className="w-full h-14 pl-7 pr-3 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 text-primary font-bold text-lg"
+                                                placeholder="0.00"
+                                                type="number"
+                                                step="0.01"
+                                                value={amountUsd}
+                                                onChange={(e) => setAmountUsd(e.target.value)}
+                                                disabled={registering || (isEditMode && editingExpense?.currency === 'PEN')}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             {/* Botón de Acción (Movido aquí) */}
