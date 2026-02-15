@@ -1,33 +1,41 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
   /* Premium Dark Theme Palette */
-  --bg-primary: #0f172a; /* Slate 900 */
-  --bg-secondary: #1e293b; /* Slate 800 */
-  --bg-card: rgba(30, 41, 59, 0.7); /* Glass effect base */
-  
-  --text-primary: #f8fafc; /* Slate 50 */
-  --text-secondary: #94a3b8; /* Slate 400 */
-  --text-accent: #38bdf8; /* Sky 400 */
+  --bg-primary: #0f172a;
+  /* Slate 900 */
+  --bg-secondary: #1e293b;
+  /* Slate 800 */
+  --bg-card: rgba(30, 41, 59, 0.7);
+  /* Glass effect base */
 
-  --primary-color: #6366f1; /* Indigo 500 */
-  --primary-hover: #4f46e5; /* Indigo 600 */
-  --secondary-color: #10b981; /* Emerald 500 */
-  --danger-color: #ef4444; /* Red 500 */
-  
+  --text-primary: #f8fafc;
+  /* Slate 50 */
+  --text-secondary: #94a3b8;
+  /* Slate 400 */
+  --text-accent: #38bdf8;
+  /* Sky 400 */
+
+  --primary-color: #6366f1;
+  /* Indigo 500 */
+  --primary-hover: #4f46e5;
+  /* Indigo 600 */
+  --secondary-color: #10b981;
+  /* Emerald 500 */
+  --danger-color: #ef4444;
+  /* Red 500 */
+
   --gradient-main: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
-  
+  --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+
   --glass-border: 1px solid rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  
+
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
-  
+
   --font-main: 'Outfit', sans-serif;
 }
 
@@ -43,7 +51,7 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
-  background-image: 
+  background-image:
     radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 20%),
     radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 20%);
   overflow-x: hidden;

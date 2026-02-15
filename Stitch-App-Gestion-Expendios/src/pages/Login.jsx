@@ -125,10 +125,7 @@ const Login = () => {
                     <button className="flex items-center justify-center w-14 h-14 rounded-full bg-slate-200 dark:bg-neutral-dark border border-slate-300 dark:border-neutral-border text-slate-600 dark:text-slate-300 hover:border-primary transition-colors" type="button">
                         <span className="material-icons-round text-3xl">fingerprint</span>
                     </button>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        ¿No tiene una cuenta? {' '}
-                        <a className="text-primary font-bold hover:underline" href="#">Registrarse</a>
-                    </p>
+
                 </div>
             </main>
 
