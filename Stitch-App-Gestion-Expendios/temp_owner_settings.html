@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec6d",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#102218",
+                        "surface-dark": "#1a2e23",
+                        "neutral-dark": "#2d4236",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Manrope', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .ios-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen pb-24">
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/10 px-6 py-4 flex items-center justify-between">
+<div>
+<h1 class="text-2xl font-bold tracking-tight">Ajustes del Propietario</h1>
+<p class="text-[10px] font-semibold uppercase tracking-widest text-primary">Modo Administrador</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+<span class="material-icons text-primary text-xl">admin_panel_settings</span>
+</div>
+</header>
+<main class="max-w-md mx-auto p-5 space-y-8">
+<section class="space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-icons text-primary text-sm">add_circle</span>
+<h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-primary/70">Nueva Iniciativa</h2>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl p-5 border border-primary/10 shadow-sm space-y-5">
+<div>
+<label class="block text-xs font-bold mb-1.5 opacity-60">Nombre de la iniciativa</label>
+<input class="w-full bg-slate-50 dark:bg-neutral-dark border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary ring-inset" placeholder="Ej. Campaña Marketing Q4" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-xs font-bold mb-1.5 opacity-60">Presupuesto inicial (Bolsa)</label>
+<input class="w-full bg-slate-50 dark:bg-neutral-dark border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary ring-inset" placeholder="0.00" type="number"/>
+</div>
+<div>
+<label class="block text-xs font-bold mb-1.5 opacity-60">Selección de moneda</label>
+<select class="w-full bg-slate-50 dark:bg-neutral-dark border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary ring-inset">
+<option>Soles (S/.)</option>
+<option>Dólares ($)</option>
+<option>Ambas</option>
+</select>
+</div>
+</div>
+<div class="space-y-3 pt-2">
+<label class="block text-xs font-bold opacity-60 uppercase tracking-tighter">Gestión de usuarios (Máx. 3)</label>
+<div class="bg-background-light dark:bg-neutral-dark/40 p-3 rounded-lg border border-primary/5 space-y-2">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[10px] bg-primary text-background-dark px-1.5 py-0.5 rounded font-bold uppercase">Usuario 1</span>
+</div>
+<input class="w-full bg-transparent border-b border-primary/10 py-1 text-sm focus:border-primary outline-none" placeholder="Correo electrónico" type="email"/>
+<input class="w-full bg-transparent border-b border-primary/10 py-1 text-sm focus:border-primary outline-none" placeholder="Contraseña" type="password"/>
+</div>
+<button class="w-full py-3 border-2 border-dashed border-primary/20 rounded-lg flex items-center justify-center gap-2 text-primary/60 hover:bg-primary/5 transition-colors">
+<span class="material-icons text-sm">person_add</span>
+<span class="text-xs font-bold uppercase tracking-tight">Agregar Segundo Usuario</span>
+</button>
+</div>
+<button class="w-full bg-primary hover:bg-primary/90 text-background-dark font-extrabold py-3 rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 mt-2">
+<span class="material-icons text-sm">rocket_launch</span>
+                CREAR INICIATIVA
+            </button>
+</div>
+</section>
+<section class="space-y-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-icons text-primary text-sm">account_balance_wallet</span>
+<h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-primary/70">Inyectar fondos</h2>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl p-5 border border-primary/10 shadow-sm space-y-4">
+<div>
+<label class="block text-xs font-bold mb-1.5 opacity-60">Seleccionar Iniciativa Activa</label>
+<div class="relative">
+<select class="w-full appearance-none bg-slate-50 dark:bg-neutral-dark border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary ring-inset">
+<option>Operaciones 2024</option>
+<option>Presupuesto Redes Sociales</option>
+<option>Útiles de Oficina</option>
+</select>
+<span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">expand_more</span>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="flex-1">
+<label class="block text-xs font-bold mb-1.5 opacity-60">Monto a inyectar</label>
+<input class="w-full bg-slate-50 dark:bg-neutral-dark border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary ring-inset" placeholder="5,000.00" type="number"/>
+</div>
+<div class="flex items-end">
+<button class="h-[46px] px-6 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 font-bold rounded-lg transition-colors flex items-center justify-center">
+                        INYECTAR
+                    </button>
+</div>
+</div>
+</div>
+</section>
+<section class="space-y-4 pb-10">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-icons text-primary text-sm">list_alt</span>
+<h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-primary/70">Iniciativas Activas</h2>
+</div>
+<span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-tight">3 Activas</span>
+</div>
+<div class="space-y-3">
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-primary/5 flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-background-light dark:bg-neutral-dark flex items-center justify-center text-primary border border-primary/10">
+<span class="material-icons">work</span>
+</div>
+<div>
+<h3 class="font-bold text-sm">Operaciones 2024</h3>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="text-xs opacity-60">S/. 12,450.00</span>
+<span class="w-1 h-1 rounded-full bg-primary/40"></span>
+<span class="text-[10px] opacity-40 uppercase font-bold tracking-tighter">Soles</span>
+</div>
+</div>
+</div>
+<button class="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Cancelar Iniciativa">
+<span class="material-icons text-xl">cancel</span>
+</button>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-primary/5 flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-background-light dark:bg-neutral-dark flex items-center justify-center text-primary border border-primary/10">
+<span class="material-icons">campaign</span>
+</div>
+<div>
+<h3 class="font-bold text-sm">Redes Sociales</h3>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="text-xs opacity-60">$ 4,200.00</span>
+<span class="w-1 h-1 rounded-full bg-primary/40"></span>
+<span class="text-[10px] opacity-40 uppercase font-bold tracking-tighter">Dólares</span>
+</div>
+</div>
+</div>
+<button class="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Cancelar Iniciativa">
+<span class="material-icons text-xl">cancel</span>
+</button>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-primary/5 flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-background-light dark:bg-neutral-dark flex items-center justify-center text-primary border border-primary/10">
+<span class="material-icons">inventory_2</span>
+</div>
+<div>
+<h3 class="font-bold text-sm">Útiles de Oficina</h3>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="text-xs opacity-60">Mixto</span>
+<span class="w-1 h-1 rounded-full bg-primary/40"></span>
+<span class="text-[10px] opacity-40 uppercase font-bold tracking-tighter">Multimoneda</span>
+</div>
+</div>
+</div>
+<button class="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-lg transition-colors" title="Cancelar Iniciativa">
+<span class="material-icons text-xl">cancel</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-xl border-t border-primary/10 px-8 py-3 flex justify-between items-center max-w-md mx-auto">
+<div class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons text-2xl">dashboard</span>
+<span class="text-[9px] font-bold uppercase">Dashboard</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-primary">
+<span class="material-icons text-2xl">settings</span>
+<span class="text-[9px] font-bold uppercase">Ajustes</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons text-2xl">history</span>
+<span class="text-[9px] font-bold uppercase">Historial</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons text-2xl">person_outline</span>
+<span class="text-[9px] font-bold uppercase">Perfil</span>
+</div>
+</nav>
+
+</body></html>

@@ -1,0 +1,290 @@
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Registro de Gastos Usuario (Bimoneda)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec6d",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#102218",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Manrope', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        input:focus {
+            outline: none;
+            border-color: #13ec6d !important;
+            ring-color: #13ec6d !important;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(19, 236, 109, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex justify-center overflow-x-hidden">
+<div class="w-full max-w-[430px] min-h-screen flex flex-col relative bg-background-light dark:bg-background-dark border-x border-slate-200 dark:border-primary/10 shadow-2xl">
+<header class="sticky top-0 z-50 w-full bg-background-light/80 dark:bg-background-dark/80 ios-blur border-b border-slate-200 dark:border-primary/10 px-6 py-4">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="material-icons text-primary">account_balance_wallet</span>
+<h1 class="text-lg font-extrabold tracking-tight">Expensy</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200/50 dark:bg-primary/10 text-slate-700 dark:text-primary active:scale-90 transition-transform" title="Configuración">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+<div class="flex-1 min-w-[140px] bg-slate-900 p-3 rounded-xl border border-slate-800">
+<p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Saldo Soles</p>
+<div class="flex items-baseline gap-1">
+<span class="text-lg font-bold text-white">S/ 4,250.00</span>
+</div>
+</div>
+<div class="flex-1 min-w-[140px] bg-slate-900 dark:bg-primary/10 p-3 rounded-xl border border-slate-800 dark:border-primary/20">
+<p class="text-[10px] font-bold uppercase tracking-wider text-primary/60 mb-1">Saldo Dólares</p>
+<div class="flex items-baseline gap-1">
+<span class="text-lg font-bold text-primary">$1,120.50</span>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col gap-8 px-6 pt-6 pb-40 overflow-y-auto custom-scrollbar">
+<div class="flex flex-col gap-6">
+<div>
+<h2 class="text-xl font-bold mb-1 text-slate-900 dark:text-white">Registrar Nuevo Gasto</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400">Ingresa los detalles del nuevo expendio realizado.</p>
+</div>
+<div class="space-y-4">
+<div class="space-y-2">
+<label class="text-sm font-semibold text-slate-600 dark:text-slate-300 ml-1">Concepto</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 dark:text-slate-500 text-xl">description</span>
+<input class="w-full h-14 pl-12 pr-4 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 font-medium" placeholder="Ej: Materiales de oficina" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="space-y-2">
+<label class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">Monto Soles (PEN)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">S/</span>
+<input class="w-full h-14 pl-9 pr-3 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 dark:text-white font-bold text-lg" placeholder="0.00" type="number"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[11px] font-bold uppercase tracking-wider text-primary ml-1">Monto Dólares (USD)</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary/70">$</span>
+<input class="w-full h-14 pl-7 pr-3 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 text-primary font-bold text-lg" placeholder="0.00" type="number"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Últimos 10 Expendios</h3>
+<button class="text-primary text-xs font-bold">Ver Todo</button>
+</div>
+<div class="space-y-3">
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">shopping_cart</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Suministros Oficina</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">Hoy, 14:20 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-slate-900 dark:text-white">-S/ 120.00</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-primary/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">language</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Dominio Web</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">Hoy, 10:15 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-primary">-$15.00</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">restaurant</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Almuerzo Equipo</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">Ayer, 13:45 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-slate-900 dark:text-white">-S/ 85.00</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">local_gas_station</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Combustible</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">Ayer, 08:20 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-slate-900 dark:text-white">-S/ 150.00</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">receipt</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Servicios Luz</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">25 Oct, 11:30 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-slate-900 dark:text-white">-S/ 450.00</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-primary/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">cloud</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Suscripción Software</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">24 Oct, 09:00 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-primary">-$9.99</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">handyman</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Mantenimiento</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">23 Oct, 16:40 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-slate-900 dark:text-white">-S/ 210.00</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">print</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Útiles de Oficina</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">22 Oct, 12:15 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-slate-900 dark:text-white">-S/ 320.00</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">coffee</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Cafetería</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">21 Oct, 08:45 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-slate-900 dark:text-white">-S/ 45.00</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400 text-xl">inventory_2</span>
+</div>
+<div>
+<p class="text-sm font-bold truncate max-w-[150px]">Embalajes</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">20 Oct, 15:30 • Por: Usuario</p>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-sm font-bold text-slate-900 dark:text-white">-S/ 60.00</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto p-6 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/95 dark:via-background-dark/95 to-transparent z-40">
+<button class="w-full h-16 rounded-2xl bg-primary text-background-dark font-extrabold text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined font-bold">add_circle</span>
+<span>Registrar Gasto</span>
+</button>
+<div class="mt-4 flex justify-center">
+<div class="w-32 h-1 bg-slate-300 dark:bg-slate-800 rounded-full"></div>
+</div>
+</footer>
+</div>
+
+</body></html>
