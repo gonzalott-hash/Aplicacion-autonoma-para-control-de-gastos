@@ -40,7 +40,22 @@ const Login = () => {
                 const { role } = await signIn(email, password);
 
                 if (role === 'owner') {
-                    navigate('/owner-settings');
+                    // Check if there is an active initiative with funds (ESTABLISHED)
+                    const { data: initiative } = await import('../lib/supabase').then(m => m.supabase
+                        .from('initiatives')
+                        .select('budget_pen, budget_usd')
+                        .eq('active', true)
+                        .limit(1)
+                        .single()
+                    );
+
+                    // If initiative exists AND has some budget > 0, go to Expense
+                    // Otherwise go to Settings to "Establish" it (Inject Funds)
+                    if (initiative && (initiative.budget_pen > 0 || initiative.budget_usd > 0)) {
+                        navigate('/owner-expense');
+                    } else {
+                        navigate('/owner-settings');
+                    }
                 } else if (role === 'user') {
                     navigate('/user-expense');
                 } else {
