@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
+import { fetchAndExportExpenses } from '../utils/exportUtils';
 
 const OwnerSettings = () => {
     // UI State
@@ -141,13 +142,31 @@ const OwnerSettings = () => {
             const usd = parseFloat(formBudgetUsd) || 0;
 
             if (pen > 0 || usd > 0) {
-                // If initializing, maybe we just update columns?
-                // Or call inject_funds?
-                // The snippet used inject_funds. Let's stick to that for safety if RPC exists.
-                // If not, we update columns directly.
-                // Checking previous code snippet: used `rpc('inject_funds'...)`.
-                if (pen > 0) await supabase.rpc('inject_funds', { p_initiative_id: principalInitiativeId, p_amount: pen, p_currency: 'PEN' });
-                if (usd > 0) await supabase.rpc('inject_funds', { p_initiative_id: principalInitiativeId, p_amount: usd, p_currency: 'USD' });
+                const { data: { user } } = await supabase.auth.getUser();
+                if (pen > 0) {
+                    await supabase.rpc('inject_funds', { p_initiative_id: principalInitiativeId, p_amount: pen, p_currency: 'PEN' });
+                    // Log as Income
+                    await supabase.from('expenses').insert({
+                        user_id: user.id,
+                        description: 'Capital Inicial (Soles)',
+                        amount: pen,
+                        currency: 'PEN',
+                        category: 'INGRESO',
+                        initiative_id: principalInitiativeId
+                    });
+                }
+                if (usd > 0) {
+                    await supabase.rpc('inject_funds', { p_initiative_id: principalInitiativeId, p_amount: usd, p_currency: 'USD' });
+                    // Log as Income
+                    await supabase.from('expenses').insert({
+                        user_id: user.id,
+                        description: 'Capital Inicial (Dólares)',
+                        amount: usd,
+                        currency: 'USD',
+                        category: 'INGRESO',
+                        initiative_id: principalInitiativeId
+                    });
+                }
             }
 
             setInitiativeName(formName);
@@ -175,6 +194,18 @@ const OwnerSettings = () => {
             });
 
             if (error) throw error;
+
+            const { data: { user } } = await supabase.auth.getUser();
+
+            // Log as Income
+            await supabase.from('expenses').insert({
+                user_id: user.id,
+                description: 'Inyección de Fondos',
+                amount: amount,
+                currency: injectionCurrency,
+                category: 'INGRESO',
+                initiative_id: principalInitiativeId
+            });
 
             setInjectionAmount('');
             alert('Fondos inyectados correctamente.');
@@ -264,6 +295,16 @@ const OwnerSettings = () => {
             alert('Contraseña incorrecta');
         } else {
             await executeTotalReset();
+        }
+    };
+
+    const handleExportExcel = async () => {
+        if (!principalInitiativeId) return alert('No hay iniciativa activa para exportar.');
+        const { success, error, count } = await fetchAndExportExpenses(principalInitiativeId);
+        if (success) {
+            alert(`Reporte descargado exitosamente (${count} registros).`);
+        } else {
+            alert('Error al exportar: ' + error);
         }
     };
 
@@ -576,7 +617,30 @@ const OwnerSettings = () => {
                         )}
                     </section>
 
-                    {/* 4. Danger Zone */}
+                    {/* 4. Data & Reportes */}
+                    <section>
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="material-icons-round text-blue-400 text-sm">table_view</span>
+                            <h2 className="text-xs font-bold uppercase tracking-widest text-blue-400/80">Data & Reportes</h2>
+                        </div>
+                        <button
+                            onClick={handleExportExcel}
+                            className="w-full bg-[#1a2e22] rounded-2xl p-5 border border-primary/10 shadow-lg flex items-center justify-between group hover:border-blue-400/30 transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/10">
+                                    <span className="material-icons-round">download</span>
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">Descargar Reporte Excel</h3>
+                                    <p className="text-[10px] text-slate-500">Historial completo de gastos registrados</p>
+                                </div>
+                            </div>
+                            <span className="material-icons-round text-slate-500 group-hover:translate-x-1 transition-transform">chevron_right</span>
+                        </button>
+                    </section>
+
+                    {/* 5. Danger Zone */}
                     <section className="mt-8 border-t border-red-500/20 pt-8 opacity-80 hover:opacity-100 transition-opacity">
                         <button
                             onClick={requestTotalReset}

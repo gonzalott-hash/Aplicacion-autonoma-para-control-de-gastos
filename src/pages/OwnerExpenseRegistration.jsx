@@ -433,8 +433,11 @@ const OwnerExpenseRegistration = () => {
                                         <p className="text-sm font-bold truncate text-slate-900 dark:text-slate-200">{item.description}</p>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <span className={`text-sm font-bold whitespace-nowrap ${item.currency === 'USD' ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>
-                                            -{item.currency === 'USD' ? '$' : 'S/'} {item.amount}
+                                        <span className={`text-sm font-bold whitespace-nowrap ${item.category === 'INGRESO'
+                                            ? 'text-emerald-500'
+                                            : (item.currency === 'USD' ? 'text-primary' : 'text-slate-900 dark:text-white')
+                                            }`}>
+                                            {item.category === 'INGRESO' ? '+' : '-'}{item.currency === 'USD' ? '$' : 'S/'} {item.amount}
                                         </span>
                                         <button
                                             onClick={() => handleEditClick(item)}
