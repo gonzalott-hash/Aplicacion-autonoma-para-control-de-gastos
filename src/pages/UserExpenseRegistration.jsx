@@ -296,10 +296,7 @@ const UserExpenseRegistration = () => {
                         <span className="material-icons-round">history</span>
                         <span className="text-[9px] font-bold uppercase tracking-tight">Historial</span>
                     </div>
-                    <div className="flex flex-col items-center gap-1 text-slate-500">
-                        <span className="material-icons-round">settings</span>
-                        <span className="text-[9px] font-bold uppercase tracking-tight">Ajustes</span>
-                    </div>
+                    {/* Debug Settings Removed */}
                 </nav>
 
                 <div className="h-1 w-32 bg-slate-400/20 rounded-full mx-auto fixed bottom-2 left-1/2 -translate-x-1/2 pointer-events-none"></div>

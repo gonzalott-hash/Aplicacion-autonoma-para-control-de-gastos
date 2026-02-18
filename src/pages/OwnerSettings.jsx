@@ -38,16 +38,30 @@ const OwnerSettings = () => {
     }, []);
 
     const initializePrincipalInitiative = async () => {
+        console.log("OwnerSettings: Initializing...");
         try {
             setLoading(true);
 
+            // Safe User Check - We trust ProtectedRoute but double check
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+            if (userError || !user) {
+                console.warn("OwnerSettings: No user found via getUser, trying database session...");
+                // Just return, let the UI show empty or allow ProtectedRoute to handle it
+                return;
+            }
+            const userId = user.id;
+            console.log("OwnerSettings: User ID found:", userId);
+
             // 1. Get Principal Initiative
-            const { data: initiatives } = await supabase
+            const { data: initiatives, error: initError } = await supabase
                 .from('initiatives')
                 .select('*')
-                .eq('active', true) // Assuming 'active' flag exists
-                .order('created_at', { ascending: false }) // Get the NEWEST one
+                .eq('active', true)
+                .order('created_at', { ascending: false })
                 .limit(1);
+
+            if (initError) throw initError;
 
             let pId = null;
             let currentName = '';
@@ -57,9 +71,10 @@ const OwnerSettings = () => {
                 pId = initiatives[0].id;
                 currentName = initiatives[0].name;
                 currentMode = initiatives[0].currency_mode || 'BOTH';
+                console.log("OwnerSettings: Active initiative found:", pId);
             } else {
-                // Should not happen if app flow is correct, but safe fallback
-                const { data: newInit, error } = await supabase
+                console.log("OwnerSettings: No active initiative, creating new one...");
+                const { data: newInit, error: createError } = await supabase
                     .from('initiatives')
                     .insert({
                         name: 'Proyecto Nuevo',
@@ -67,26 +82,29 @@ const OwnerSettings = () => {
                         budget_usd: 0,
                         currency_mode: 'BOTH',
                         icon: 'account_balance',
-                        active: true
+                        active: true,
+                        owner_id: userId
                     })
                     .select()
                     .single();
 
-                if (error) throw error;
+                if (createError) throw createError;
                 pId = newInit.id;
                 currentName = newInit.name;
+                currentMode = 'BOTH'; // Default for new
+                console.log("OwnerSettings: New initiative created:", pId);
             }
 
             setPrincipalInitiativeId(pId);
             setInitiativeName(currentName);
-            setFormName(''); // User wants this field to appear empty
+            setFormName('');
             setFormCurrencyMode(currentMode);
 
             await fetchCollaborators(pId);
 
         } catch (error) {
-            console.error('Error initializing:', error);
-            // Don't alert on load to avoid spam, just log
+            console.error('OwnerSettings: Critical Error initializing:', error);
+            alert('Error cargando ajustes: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -283,19 +301,10 @@ const OwnerSettings = () => {
     };
 
     const handlePasswordSubmit = async () => {
-        if (!passwordInput) return alert('Ingrese contraseña');
-
-        const { data: { user } } = await supabase.auth.getUser();
-        const { error } = await supabase.auth.signInWithPassword({
-            email: user.email,
-            password: passwordInput,
-        });
-
-        if (error) {
-            alert('Contraseña incorrecta');
-        } else {
-            await executeTotalReset();
+        if (passwordInput !== 'BORRAR TODO') {
+            return alert('Texto de confirmación incorrecto. Escribe "BORRAR TODO".');
         }
+        await executeTotalReset();
     };
 
     const handleExportExcel = async () => {
@@ -373,21 +382,35 @@ const OwnerSettings = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-[#111c16] text-primary font-display">
+                <div className="text-center space-y-4">
+                    <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
+                    <p className="animate-pulse text-sm font-bold tracking-widest">CARGANDO AJUSTES...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-[#111c16] text-slate-100 font-display min-h-screen flex justify-center selection:bg-primary selection:text-[#111c16]">
 
-            {/* Password Modal */}
+            {/* Confirmation Modal */}
             {showPasswordModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
                     <div className="bg-[#1a2e22] border border-primary/20 p-6 rounded-2xl w-full max-w-xs shadow-2xl relative">
-                        <h3 className="text-white font-bold text-lg mb-2 text-center">Seguridad Requerida</h3>
-                        <p className="text-slate-400 text-xs mb-4 text-center">Confirma tu contraseña para resetear todo.</p>
+                        <h3 className="text-white font-bold text-lg mb-2 text-center">Zona de Peligro</h3>
+                        <p className="text-slate-400 text-xs mb-4 text-center">
+                            Esta acción es irreversible.<br />
+                            Escribe <span className="text-red-500 font-bold">BORRAR TODO</span> para confirmar.
+                        </p>
                         <input
-                            type="password"
-                            className="w-full bg-[#111c16] border border-primary/10 rounded-xl px-4 py-3 text-white text-sm mb-4 focus:ring-2 focus:ring-primary/50 outline-none placeholder-slate-600 text-center tracking-widest"
-                            placeholder="••••••"
+                            type="text"
+                            className="w-full bg-[#111c16] border border-red-500/30 rounded-xl px-4 py-3 text-white text-sm mb-4 focus:ring-2 focus:ring-red-500/50 outline-none placeholder-slate-600 text-center tracking-widest font-bold uppercase"
+                            placeholder="BORRAR TODO"
                             value={passwordInput}
-                            onChange={(e) => setPasswordInput(e.target.value)}
+                            onChange={(e) => setPasswordInput(e.target.value.toUpperCase())}
                         />
                         <div className="flex gap-3">
                             <button
@@ -444,9 +467,20 @@ const OwnerSettings = () => {
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-white">Ajustes del propietario</h1>
                     </div>
-                    <Link to="/owner-expense" className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1a2e22] text-primary border border-primary/10 active:scale-95 transition-transform">
-                        <span className="material-icons-round">arrow_back</span>
-                    </Link>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={async () => {
+                                await supabase.auth.signOut();
+                                window.location.href = '/';
+                            }}
+                            className="h-10 px-4 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 text-xs font-bold hover:bg-red-500 hover:text-white transition-colors"
+                        >
+                            SALIR
+                        </button>
+                        <Link to="/owner-expense" className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1a2e22] text-primary border border-primary/10 active:scale-95 transition-transform">
+                            <span className="material-icons-round">arrow_back</span>
+                        </Link>
+                    </div>
                 </header>
 
                 <main className="px-5 py-6 space-y-8 flex-1 overflow-y-auto">

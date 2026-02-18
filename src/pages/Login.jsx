@@ -1,69 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 const Login = () => {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const signIn = useAuthStore((state) => state.signIn);
+    const [message, setMessage] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
 
-    const [fullName, setFullName] = useState('');
-    const [isRegistering, setIsRegistering] = useState(false); // Toggle state
+    // Check for existing session and handle Smart Redirection
+    // Check for existing session and handle Smart Redirection
+    // We now rely on the authStore to have updated 'user', 'role', and 'hasInitiative'
+    const { user, role, hasInitiative, loading: authLoading, initialize } = useAuthStore();
+
+    useEffect(() => {
+        // Initialize auth store if not already loaded
+        initialize();
+    }, []);
+
+    useEffect(() => {
+        if (!authLoading && user) {
+            console.log("Login: User detected", { user: user.id, role, hasInitiative });
+
+            if (role === 'owner') {
+                const target = location.state?.from?.pathname || (hasInitiative ? '/owner-expense' : '/owner-settings');
+                console.log("Login: Redirecting to", target);
+                navigate(target, { replace: true });
+            } else if (role === 'user') {
+                console.log("Login: Redirecting to User Expense");
+                navigate('/user-expense');
+            } else {
+                // If role is not yet loaded or invalid, we can wait or default
+                // But if !authLoading and user exists, role SHOULD be there if DB is consistent.
+                // Fallback:
+                console.log("Login: Unknown role or no specific redirect, going to Owner Settings as fallback");
+                navigate('/owner-settings');
+            }
+        }
+    }, [user, role, hasInitiative, authLoading, navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setMessage('');
+
         try {
-            if (isRegistering) {
-                // Registration Logic
-                const { data, error } = await import('../lib/supabase').then(m => m.supabase.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        data: {
-                            full_name: fullName,
-                        },
-                    },
-                }));
+            const { error } = await supabase.auth.signInWithOtp({
+                email,
+                options: {
+                    emailRedirectTo: window.location.origin, // Force redirect to current port
+                },
+            });
 
-                if (error) throw error;
-
-                alert('Registro exitoso. Por favor inicie sesión.');
-                setIsRegistering(false); // Switch back to login
-            } else {
-                // Login Logic
-                const { role } = await signIn(email, password);
-
-                if (role === 'owner') {
-                    // Check if there is an active initiative with funds (ESTABLISHED)
-                    const { data: initiative } = await import('../lib/supabase').then(m => m.supabase
-                        .from('initiatives')
-                        .select('budget_pen, budget_usd')
-                        .eq('active', true)
-                        .limit(1)
-                        .single()
-                    );
-
-                    // If initiative exists AND has some budget > 0, go to Expense
-                    // Otherwise go to Settings to "Establish" it (Inject Funds)
-                    if (initiative && (initiative.budget_pen > 0 || initiative.budget_usd > 0)) {
-                        navigate('/owner-expense');
-                    } else {
-                        navigate('/owner-settings');
-                    }
-                } else if (role === 'user') {
-                    navigate('/user-expense');
-                } else {
-                    navigate('/user-expense');
-                }
-            }
+            if (error) throw error;
+            setMessage('¡Enlace de acceso enviado! Revise su correo electrónico.');
         } catch (err) {
-            setError(err.message || 'Error en autenticación');
+            let errorMsg = err.message || 'Error al enviar el enlace de acceso';
+            if (errorMsg.includes('rate limit')) {
+                errorMsg = 'Límite de envíos excedido. Use un alias (ej: sucorreo+prueba@gmail.com) o espere unos minutos.';
+            }
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -83,7 +83,7 @@ const Login = () => {
                     </div>
                     <h1 className="text-3xl font-extrabold tracking-tight dark:text-white mb-2">Bienvenido</h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">
-                        Acceda de forma segura a sus carteras multimoneda y controles de presupuesto.
+                        Ingrese su correo para recibir un enlace de acceso seguro.
                     </p>
                 </div>
 
@@ -93,42 +93,9 @@ const Login = () => {
                             {error}
                         </div>
                     )}
-
-                    {/* Toggle Login/Register */}
-                    <div className="flex bg-slate-100 dark:bg-neutral-dark p-1 rounded-xl mb-6">
-                        <button
-                            type="button"
-                            onClick={() => setIsRegistering(false)}
-                            className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${!isRegistering ? 'bg-white dark:bg-slate-700 shadow text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                        >
-                            Ingresar
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setIsRegistering(true)}
-                            className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isRegistering ? 'bg-white dark:bg-slate-700 shadow text-primary' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-                        >
-                            Registrarse
-                        </button>
-                    </div>
-
-                    {isRegistering && (
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1" htmlFor="fullName">
-                                Nombre Completo
-                            </label>
-                            <div className="relative group">
-                                <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">badge</span>
-                                <input
-                                    className="w-full pl-12 pr-4 py-4 bg-white dark:bg-neutral-dark border-transparent dark:border-neutral-border focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary rounded-xl transition-all outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
-                                    id="fullName"
-                                    placeholder="Tu nombre"
-                                    type="text"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    required={isRegistering}
-                                />
-                            </div>
+                    {message && (
+                        <div className="bg-green-500/10 border border-green-500/50 text-green-500 text-sm p-3 rounded-xl text-center">
+                            {message}
                         </div>
                     )}
 
@@ -150,41 +117,15 @@ const Login = () => {
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center px-1">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" htmlFor="password">
-                                Contraseña
-                            </label>
-                            {!isRegistering && <a className="text-xs font-medium text-primary hover:text-primary/80" href="#">¿Olvidó su clave?</a>}
-                        </div>
-                        <div className="relative group">
-                            <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">lock</span>
-                            <input
-                                className="w-full pl-12 pr-12 py-4 bg-white dark:bg-neutral-dark border-transparent dark:border-neutral-border focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary rounded-xl transition-all outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
-                                id="password"
-                                placeholder="••••••••"
-                                type={showPassword ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                            <button
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 outline-none"
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                <span className="material-icons-round text-xl">{showPassword ? 'visibility' : 'visibility_off'}</span>
-                            </button>
-                        </div>
-                    </div>
-
                     <button
                         className="w-full bg-primary hover:bg-primary/90 text-background-dark font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                         type="submit"
                         disabled={loading}
                     >
-                        {loading ? 'Procesando...' : (isRegistering ? 'Crear Cuenta' : 'Iniciar sesión')}
+                        {loading ? 'Enviando enlace...' : 'Recibir acceso por email'}
                     </button>
+
+
                 </form>
 
                 <div className="relative my-8">
@@ -192,15 +133,15 @@ const Login = () => {
                         <div className="w-full border-t border-slate-200 dark:border-neutral-border"></div>
                     </div>
                     <div className="relative flex justify-center text-xs uppercase tracking-widest">
-                        <span className="bg-background-light dark:bg-background-dark px-4 text-slate-500">Acceso Seguro</span>
+                        <span className="bg-background-light dark:bg-background-dark px-4 text-slate-500">Acceso Seguro sin Contraseña</span>
                     </div>
                 </div>
 
                 <div className="flex flex-col items-center space-y-8">
-                    <button className="flex items-center justify-center w-14 h-14 rounded-full bg-slate-200 dark:bg-neutral-dark border border-slate-300 dark:border-neutral-border text-slate-600 dark:text-slate-300 hover:border-primary transition-colors" type="button">
-                        <span className="material-icons-round text-3xl">fingerprint</span>
-                    </button>
-
+                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-600 text-xs">
+                        <span className="material-icons-round text-sm">lock</span>
+                        <span>Usamos Magic Links para mayor seguridad</span>
+                    </div>
                 </div>
             </main>
 
@@ -209,12 +150,10 @@ const Login = () => {
                     <span className="material-icons-round text-xs">verified_user</span>
                     <span>Sistema Encriptado AES de 256 bits</span>
                 </div>
+                <div className="mt-4">
+                    {/* Debug button removed */}
+                </div>
             </footer>
-
-            <div className="fixed top-6 right-6 flex items-center gap-2 bg-neutral-dark border border-neutral-border rounded-full py-1.5 px-3 z-20">
-                <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">Sistema Listo</span>
-            </div>
         </div>
     );
 };

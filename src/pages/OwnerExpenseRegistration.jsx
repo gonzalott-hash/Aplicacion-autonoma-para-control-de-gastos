@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const OwnerExpenseRegistration = () => {
+    const navigate = useNavigate();
     const [balances, setBalances] = useState({ PEN: 0, USD: 0 });
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -29,6 +30,8 @@ const OwnerExpenseRegistration = () => {
         try {
             setLoading(true);
 
+
+
             // Fetch PRINCIPAL Initiative (Newest Active)
             const { data: initiativeData } = await supabase.from('initiatives')
                 .select('*')
@@ -37,16 +40,17 @@ const OwnerExpenseRegistration = () => {
                 .limit(1)
                 .single();
 
-            if (initiativeData) {
+            if (initiativeData && initiativeData.name) {
                 setBalances({
                     PEN: parseFloat(initiativeData.budget_pen || 0),
                     USD: parseFloat(initiativeData.budget_usd || 0)
                 });
                 setCurrencyMode(initiativeData.currency_mode || 'BOTH'); // Set currency mode
             } else {
-                // If no initiative exists (edge case if Settings wasn't visited), balances are 0
-                setBalances({ PEN: 0, USD: 0 });
-                setCurrencyMode('BOTH');
+                // If no initiative exists, redirect to settings to create one
+                // alert('No se encontró una cuenta activa. Redirigiendo a configuración...');
+                navigate('/owner-settings');
+                return;
             }
 
             // Expenses
@@ -237,61 +241,48 @@ const OwnerExpenseRegistration = () => {
     };
 
     const handlePasswordVerify = async () => {
-        if (!passwordInput) return alert('Ingresa tu contraseña');
-
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            // Verify password by attempting sign in
-            const { error } = await supabase.auth.signInWithPassword({
-                email: user.email,
-                password: passwordInput,
-            });
-
-            if (error) {
-                alert('Contraseña incorrecta');
-                return;
-            }
-
-            // Password OK -> Load Data for Editing
-            setShowPasswordModal(false);
-
-            const expense = tempExpenseToEdit;
-            setDescription(expense.description);
-            if (expense.currency === 'PEN') {
-                setAmountPen(expense.amount);
-                setAmountUsd('');
-            } else {
-                setAmountUsd(expense.amount);
-                setAmountPen('');
-            }
-
-            setEditingExpense(expense);
-            setIsEditMode(true);
-
-            // Scroll to Form
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        } catch (err) {
-            console.error(err);
-            alert('Error verificando credenciales');
+        if (passwordInput !== 'EDITAR') {
+            return alert('Texto incorrecto. Escribe "EDITAR" para confirmar.');
         }
+
+        // Confirmation OK -> Load Data for Editing
+        setShowPasswordModal(false);
+
+        const expense = tempExpenseToEdit;
+        setDescription(expense.description);
+        if (expense.currency === 'PEN') {
+            setAmountPen(expense.amount);
+            setAmountUsd('');
+        } else {
+            setAmountUsd(expense.amount);
+            setAmountPen('');
+        }
+
+        setEditingExpense(expense);
+        setIsEditMode(true);
+
+        // Scroll to Form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     return (
         <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex justify-center overflow-x-hidden font-display">
 
-            {/* Modal de Password */}
+            {/* Modal de Confirmación para Editar */}
             {showPasswordModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
                     <div className="bg-[#1a2e22] border border-primary/20 p-6 rounded-2xl w-full max-w-xs shadow-2xl relative">
-                        <h3 className="text-white font-bold text-lg mb-2 text-center">Seguridad Requerida</h3>
-                        <p className="text-slate-400 text-xs mb-4 text-center">Ingresa tu contraseña para editar este gasto.</p>
+                        <h3 className="text-white font-bold text-lg mb-2 text-center">Confirmar Edición</h3>
+                        <p className="text-slate-400 text-xs mb-4 text-center">
+                            Para rectificar este gasto,<br />
+                            escribe <span className="text-primary font-bold">EDITAR</span> abajo.
+                        </p>
                         <input
-                            type="password"
-                            className="w-full bg-[#111c16] border border-primary/10 rounded-xl px-4 py-3 text-white text-sm mb-4 focus:ring-2 focus:ring-primary/50 outline-none placeholder-slate-600 text-center tracking-widest"
-                            placeholder="••••••"
+                            type="text"
+                            className="w-full bg-[#111c16] border border-primary/30 rounded-xl px-4 py-3 text-white text-sm mb-4 focus:ring-2 focus:ring-primary/50 outline-none placeholder-slate-600 text-center tracking-widest font-bold uppercase"
+                            placeholder="EDITAR"
                             value={passwordInput}
-                            onChange={(e) => setPasswordInput(e.target.value)}
+                            onChange={(e) => setPasswordInput(e.target.value.toUpperCase())}
                         />
                         <div className="flex gap-3">
                             <button
@@ -304,7 +295,7 @@ const OwnerExpenseRegistration = () => {
                                 onClick={handlePasswordVerify}
                                 className="flex-1 py-3 rounded-xl bg-primary text-[#111c16] font-bold text-xs hover:opacity-90 transition shadow-lg shadow-primary/20"
                             >
-                                VERIFICAR
+                                CONFIRMAR
                             </button>
                         </div>
                     </div>
@@ -317,9 +308,13 @@ const OwnerExpenseRegistration = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-lg font-extrabold tracking-tight">Registro de gastos</h1>
                         </div>
-                        <Link to="/owner-settings" className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200/50 dark:bg-primary/10 text-slate-700 dark:text-primary active:scale-90 transition-transform" title="Configuración">
+                        <button
+                            onClick={() => navigate('/owner-settings')}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
+                            title="Configuración"
+                        >
                             <span className="material-symbols-outlined">settings</span>
-                        </Link>
+                        </button>
                     </div>
                     <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
                         {/* Conditionally Show Balance Boxes based on Currency Mode */}
