@@ -469,24 +469,12 @@ const OwnerSettings = () => {
             <div className="w-full max-w-md min-h-screen bg-[#111c16] relative flex flex-col pb-32">
                 <header className="sticky top-0 z-50 bg-[#111c16]/90 backdrop-blur-md px-6 pt-8 pb-4 flex justify-between items-center border-b border-primary/5">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-white">Ajustes del propietario</h1>
+                        <h1 className="text-xl font-bold tracking-tight text-white">
+                            Ajustes: <span className="text-primary">{initiativeName || 'Cargando...'}</span>
+                        </h1>
                     </div>
                     <div className="flex gap-2">
-                        <button
-                            onClick={async () => {
-                                try {
-                                    await signOut();
-                                    navigate('/', { replace: true });
-                                } catch (error) {
-                                    console.error("Logout failed", error);
-                                    // Fallback
-                                    window.location.href = '/';
-                                }
-                            }}
-                            className="h-10 px-4 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 text-xs font-bold hover:bg-red-500 hover:text-white transition-colors"
-                        >
-                            SALIR
-                        </button>
+                        {/* Logout removed as requested */}
                         <Link to="/owner-expense" className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1a2e22] text-primary border border-primary/10 active:scale-95 transition-transform">
                             <span className="material-icons-round">arrow_back</span>
                         </Link>

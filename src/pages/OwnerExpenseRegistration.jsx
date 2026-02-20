@@ -8,7 +8,8 @@ const OwnerExpenseRegistration = () => {
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [registering, setRegistering] = useState(false);
-    const [currencyMode, setCurrencyMode] = useState('BOTH'); // New state for currency mode
+    const [currencyMode, setCurrencyMode] = useState('BOTH');
+    const [initiativeName, setInitiativeName] = useState(''); // New state for name
 
     // Form
     const [description, setDescription] = useState('');
@@ -48,7 +49,8 @@ const OwnerExpenseRegistration = () => {
                     PEN: parseFloat(initiativeData.budget_pen || 0),
                     USD: parseFloat(initiativeData.budget_usd || 0)
                 });
-                setCurrencyMode(initiativeData.currency_mode || 'BOTH'); // Set currency mode
+                setCurrencyMode(initiativeData.currency_mode || 'BOTH');
+                setInitiativeName(initiativeData.name); // Set name
             } else {
                 // If no initiative exists, redirect to settings to create one
                 // alert('No se encontró una cuenta activa. Redirigiendo a configuración...');
@@ -309,18 +311,11 @@ const OwnerExpenseRegistration = () => {
                 <header className="sticky top-0 z-50 w-full bg-background-light/80 dark:bg-background-dark/80 ios-blur border-b border-slate-200 dark:border-primary/10 px-6 py-4">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-extrabold tracking-tight">Registro de gastos</h1>
+                            <h1 className="text-lg font-extrabold tracking-tight truncate max-w-[200px]">
+                                {initiativeName || 'Registro de Gastos'}
+                            </h1>
                         </div>
-                        <button
-                            onClick={async () => {
-                                await supabase.auth.signOut();
-                                window.location.href = '/';
-                            }}
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 active:scale-95 transition-transform"
-                            title="Cerrar Sesión"
-                        >
-                            <span className="material-symbols-outlined">logout</span>
-                        </button>
+                        {/* Logout button removed as requested */}
                         <button
                             onClick={() => navigate('/owner-settings')}
                             className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
