@@ -37,9 +37,7 @@ export const useAuthStore = create((set, get) => ({
                         const { data: initiative, error: initError } = await supabase
                             .from('initiatives')
                             .select('id')
-                            .eq('owner_id', session.user.id)
                             .eq('active', true)
-                            .neq('name', '') // Ensure it has a name (is fully set up)
                             .order('created_at', { ascending: false })
                             .limit(1)
                             .maybeSingle();

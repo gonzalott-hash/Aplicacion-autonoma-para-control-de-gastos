@@ -38,7 +38,6 @@ const OwnerExpenseRegistration = () => {
             // Fetch PRINCIPAL Initiative (Newest Active)
             const { data: initiativeData } = await supabase.from('initiatives')
                 .select('*')
-                .eq('owner_id', user.id) // Explicitly filter by owner
                 .eq('active', true)
                 .order('created_at', { ascending: false }) // Get the NEWEST one
                 .limit(1)
