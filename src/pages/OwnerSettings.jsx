@@ -469,14 +469,13 @@ const OwnerSettings = () => {
             <div className="w-full max-w-md min-h-screen bg-[#111c16] relative flex flex-col pb-32">
                 <header className="sticky top-0 z-50 bg-[#111c16]/90 backdrop-blur-md px-6 pt-8 pb-4 flex justify-between items-center border-b border-primary/5">
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight text-white">
-                            Ajustes: <span className="text-primary">{initiativeName || 'Cargando...'}</span>
-                        </h1>
+                        <h1 className="text-xl font-bold tracking-tight text-white">Ajustes del propietario</h1>
+                        <p className="text-sm font-bold text-primary mt-1">{initiativeName || 'Cargando...'}</p>
                     </div>
                     <div className="flex gap-2">
                         {/* Logout removed as requested */}
                         <Link to="/owner-expense" className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1a2e22] text-primary border border-primary/10 active:scale-95 transition-transform">
-                            <span className="material-icons-round">arrow_back</span>
+                            <span className="material-icons-round">arrow_forward</span>
                         </Link>
                     </div>
                 </header>
