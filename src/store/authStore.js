@@ -38,6 +38,8 @@ export const useAuthStore = create((set, get) => ({
                             .from('initiatives')
                             .select('id')
                             .eq('owner_id', session.user.id)
+                            .eq('active', true) // Only count active initiatives
+                            .order('created_at', { ascending: false })
                             .limit(1)
                             .maybeSingle();
 

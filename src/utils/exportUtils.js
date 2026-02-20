@@ -1,16 +1,14 @@
 import { supabase } from '../lib/supabase';
-// import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 
 export const downloadExcel = (data, fileName) => {
-    console.log("Export disabled for debugging", data, fileName);
-    alert("Función de exportar deshabilitada temporalmente para pruebas.");
-    /*
+    // console.log("Export enabled", data, fileName);
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Gastos");
     XLSX.writeFile(workbook, `${fileName}.xlsx`);
-    */
 };
+
 
 export const fetchAndExportExpenses = async (initiativeId) => {
     try {

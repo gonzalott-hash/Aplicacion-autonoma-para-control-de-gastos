@@ -52,7 +52,7 @@ const Login = () => {
             const { error } = await supabase.auth.signInWithOtp({
                 email,
                 options: {
-                    emailRedirectTo: window.location.origin, // Force redirect to current port
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
                 },
             });
 
@@ -69,6 +69,17 @@ const Login = () => {
         }
     };
 
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display">
+                <div className="flex flex-col items-center gap-6 animate-pulse">
+                    <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                        <span className="material-icons-round text-primary text-3xl animate-spin">sync</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-center overflow-hidden relative">
             <div className="fixed inset-0 pointer-events-none overflow-hidden">

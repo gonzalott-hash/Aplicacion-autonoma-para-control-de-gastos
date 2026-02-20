@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { fetchAndExportExpenses } from '../utils/exportUtils';
+import { useAuthStore } from '../store/authStore';
 
 const OwnerSettings = () => {
     // UI State
@@ -32,6 +33,9 @@ const OwnerSettings = () => {
 
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordInput, setPasswordInput] = useState('');
+
+    const navigate = useNavigate();
+    const { signOut } = useAuthStore();
 
     useEffect(() => {
         initializePrincipalInitiative();
@@ -470,8 +474,14 @@ const OwnerSettings = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={async () => {
-                                await supabase.auth.signOut();
-                                window.location.href = '/';
+                                try {
+                                    await signOut();
+                                    navigate('/', { replace: true });
+                                } catch (error) {
+                                    console.error("Logout failed", error);
+                                    // Fallback
+                                    window.location.href = '/';
+                                }
                             }}
                             className="h-10 px-4 rounded-full bg-red-500/10 text-red-500 border border-red-500/20 text-xs font-bold hover:bg-red-500 hover:text-white transition-colors"
                         >

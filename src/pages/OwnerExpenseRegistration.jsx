@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const OwnerExpenseRegistration = () => {
     const navigate = useNavigate();
@@ -308,6 +308,16 @@ const OwnerExpenseRegistration = () => {
                         <div className="flex items-center gap-2">
                             <h1 className="text-lg font-extrabold tracking-tight">Registro de gastos</h1>
                         </div>
+                        <button
+                            onClick={async () => {
+                                await supabase.auth.signOut();
+                                window.location.href = '/';
+                            }}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500/10 text-red-500 active:scale-95 transition-transform"
+                            title="Cerrar Sesión"
+                        >
+                            <span className="material-symbols-outlined">logout</span>
+                        </button>
                         <button
                             onClick={() => navigate('/owner-settings')}
                             className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
