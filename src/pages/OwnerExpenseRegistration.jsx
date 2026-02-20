@@ -311,9 +311,7 @@ const OwnerExpenseRegistration = () => {
                 <header className="sticky top-0 z-50 w-full bg-background-light/80 dark:bg-background-dark/80 ios-blur border-b border-slate-200 dark:border-primary/10 px-6 py-4">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-extrabold tracking-tight truncate max-w-[200px]">
-                                {initiativeName || 'Registro de Gastos'}
-                            </h1>
+                            <h1 className="text-lg font-extrabold tracking-tight">Registro de gastos</h1>
                         </div>
                         {/* Logout button removed as requested */}
                         <button
@@ -406,12 +404,15 @@ const OwnerExpenseRegistration = () => {
                             <button
                                 onClick={handleRegisterExpense}
                                 disabled={registering}
-                                className={`w-full h-14 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg mt-2 ${isEditMode
+                                className={`w-full h-auto py-3 rounded-2xl font-extrabold text-lg flex flex-col items-center justify-center gap-0 active:scale-95 transition-transform shadow-lg mt-2 ${isEditMode
                                     ? 'bg-orange-500 text-white shadow-orange-500/20 hover:bg-orange-600'
                                     : 'bg-primary text-background-dark shadow-primary/20 hover:bg-emerald-400'
                                     } disabled:opacity-50 disabled:scale-100`}
                             >
                                 <span>{registering ? (isEditMode ? 'Actualizando...' : 'Registrando...') : (isEditMode ? 'RECTIFICAR GASTO' : 'REGISTRAR GASTO')}</span>
+                                {initiativeName && !registering && (
+                                    <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest">{initiativeName}</span>
+                                )}
                             </button>
 
                             {isEditMode && (
