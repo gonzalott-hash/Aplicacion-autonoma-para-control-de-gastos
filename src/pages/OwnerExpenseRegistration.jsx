@@ -66,6 +66,7 @@ const OwnerExpenseRegistration = () => {
           *,
           profiles:user_id (full_name, email)
         `)
+                .eq('initiative_id', initiativeData.id)
                 .order('created_at', { ascending: false })
                 .limit(10);
             setExpenses(expenseData || []);
