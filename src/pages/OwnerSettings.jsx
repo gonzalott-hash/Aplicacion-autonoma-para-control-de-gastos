@@ -62,6 +62,7 @@ const OwnerSettings = () => {
                 .from('initiatives')
                 .select('*')
                 .eq('active', true)
+                .eq('owner_id', userId)
                 .order('created_at', { ascending: false })
                 .limit(1);
 
