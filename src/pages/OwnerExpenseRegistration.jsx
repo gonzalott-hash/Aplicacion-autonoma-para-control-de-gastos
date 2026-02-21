@@ -110,7 +110,7 @@ const OwnerExpenseRegistration = () => {
                 .select('*')
                 .eq('active', true)
                 .eq('owner_id', user.id)
-                .order('created_at', { ascending: true })
+                .order('created_at', { ascending: false })
                 .limit(1)
                 .single();
 
@@ -197,7 +197,8 @@ const OwnerExpenseRegistration = () => {
                     amount: pen,
                     currency: 'PEN',
                     category: 'general',
-                    initiative_id: targetInit.id
+                    initiative_id: targetInit.id,
+                    owner_id: user.id
                 });
                 if ((currencyMode === 'USD' || currencyMode === 'BOTH') && usd > 0) inserts.push({
                     user_id: user.id,
@@ -205,7 +206,8 @@ const OwnerExpenseRegistration = () => {
                     amount: usd,
                     currency: 'USD',
                     category: 'general',
-                    initiative_id: targetInit.id
+                    initiative_id: targetInit.id,
+                    owner_id: user.id
                 });
 
                 const { error: insertError } = await supabase.from('expenses').insert(inserts);
