@@ -473,12 +473,14 @@ const OwnerSettings = () => {
                         <h1 className="text-xl font-bold tracking-tight text-white">Ajustes del propietario</h1>
                         <p className="text-sm font-bold text-primary mt-1">{initiativeName || 'Cargando...'}</p>
                     </div>
-                    <div className="flex gap-2">
-                        {/* Logout removed as requested */}
-                        <Link to="/owner-expense" className="px-4 h-10 flex items-center justify-center rounded-xl bg-primary text-[#111c16] font-bold text-xs active:scale-95 transition-transform shadow-lg shadow-primary/20">
-                            A registro de gastos
-                        </Link>
-                    </div>
+                    <Link
+                        to="/owner-expense"
+                        className="pr-6 pl-4 h-10 flex items-center justify-center bg-primary text-[#111c16] font-bold text-xs active:scale-95 transition-transform shadow-lg shadow-primary/20 hover:brightness-110"
+                        style={{ clipPath: 'polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)' }}
+                    >
+                        A registro de gastos
+                        <span className="material-icons-round text-sm ml-1 -mr-1">chevron_right</span>
+                    </Link>
                 </header>
 
                 <main className="px-5 py-6 space-y-8 flex-1 overflow-y-auto">
