@@ -475,8 +475,8 @@ const OwnerSettings = () => {
                     </div>
                     <div className="flex gap-2">
                         {/* Logout removed as requested */}
-                        <Link to="/owner-expense" className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1a2e22] text-primary border border-primary/10 active:scale-95 transition-transform">
-                            <span className="material-icons-round">arrow_forward</span>
+                        <Link to="/owner-expense" className="px-4 h-10 flex items-center justify-center rounded-xl bg-primary text-[#111c16] font-bold text-xs active:scale-95 transition-transform shadow-lg shadow-primary/20">
+                            A registro de gastos
                         </Link>
                     </div>
                 </header>
