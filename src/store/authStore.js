@@ -38,6 +38,7 @@ export const useAuthStore = create((set, get) => ({
                             .from('initiatives')
                             .select('id')
                             .eq('active', true)
+                            .eq('owner_id', session.user.id)
                             .order('created_at', { ascending: false })
                             .limit(1)
                             .maybeSingle();
@@ -78,6 +79,7 @@ export const useAuthStore = create((set, get) => ({
                             const { data: initiative } = await supabase
                                 .from('initiatives')
                                 .select('id')
+                                .eq('active', true)
                                 .eq('owner_id', session.user.id)
                                 .limit(1)
                                 .maybeSingle();
@@ -121,6 +123,7 @@ export const useAuthStore = create((set, get) => ({
                 const { data: initiative } = await supabase
                     .from('initiatives')
                     .select('id')
+                    .eq('active', true)
                     .eq('owner_id', data.user.id)
                     .limit(1)
                     .maybeSingle();

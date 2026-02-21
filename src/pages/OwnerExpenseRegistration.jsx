@@ -40,6 +40,7 @@ const OwnerExpenseRegistration = () => {
             const { data: initiativeData } = await supabase.from('initiatives')
                 .select('*')
                 .eq('active', true)
+                .eq('owner_id', user.id)
                 .order('created_at', { ascending: false }) // Get the NEWEST one
                 .limit(1)
                 .maybeSingle(); // Switch to maybeSingle to avoid 406 errors
@@ -107,6 +108,7 @@ const OwnerExpenseRegistration = () => {
             const { data: initiative } = await supabase.from('initiatives')
                 .select('*')
                 .eq('active', true)
+                .eq('owner_id', user.id)
                 .order('created_at', { ascending: true })
                 .limit(1)
                 .single();
