@@ -132,20 +132,6 @@ const OwnerExpenseRegistration = () => {
 
                 if (editingExpense.currency === 'PEN') {
                     const { error: revError } = await supabase.from('initiatives')
-                        .update({ budget_pen: currentBudgetPen - oldAmount }) // FIX: Should be adding back if we are removing the expense, but here we are rectifying.
-                        // Wait, logic in previous file was:
-                        // update({ budget_pen: currentBudgetPen + oldAmount })
-                        // I copied my previous thought's code which had + oldAmount.
-                        // Let's double check the logic.
-                        // If I edit an expense of 100 PEN to be 120 PEN.
-                        // 1. Revert: Budget = Budget + 100.
-                        // 2. Apply New: Budget = Budget - 120.
-                        // So yes, reverting means ADDING back the expense amount to the budget.
-                        // In my previous step (Step 327 view_file), lines 116 said:
-                        // .update({ budget_pen: currentBudgetPen + oldAmount })
-                        // So it was correct.
-                        // ERROR: In the code I prepared for `write_to_file` in the thought block, I might have just copy-pasted.
-                        // Let me re-verify the code I am about to write.
                         .update({ budget_pen: currentBudgetPen + oldAmount })
                         .eq('id', targetInit.id);
                     if (revError) throw new Error('Error revirtiendo presupuesto (PEN): ' + revError.message);
