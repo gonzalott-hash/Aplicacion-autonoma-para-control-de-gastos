@@ -289,18 +289,34 @@ const OwnerSettings = () => {
 
             if (nameError) throw nameError;
 
+            // Remove all collaborators
+            const { error: membersError } = await supabase
+                .from('initiative_members')
+                .delete()
+                .eq('initiative_id', principalInitiativeId);
+
+            if (membersError) console.error("Error deleting members during reset:", membersError);
+
             setInitiativeName('');
             setFormName('');
             setFormCurrencyMode('BOTH');
-            alert('Sistema reseteado a cero (Nombre, Balances e Historial).');
+            setCollaboratorCount(0);
+            setCollaboratorId(null);
+            alert('Sistema reseteado a cero (Nombre, Balances, Historial y Colaboradores).');
 
         } catch (err) {
             console.error(err);
             // Fallback manual reset if RPC fails
             await supabase.from('expenses').delete().eq('initiative_id', principalInitiativeId);
+            await supabase.from('initiative_members').delete().eq('initiative_id', principalInitiativeId);
             await supabase.from('initiatives').update({
                 budget_pen: 0, budget_usd: 0, name: '', currency_mode: 'BOTH'
             }).eq('id', principalInitiativeId);
+            setInitiativeName('');
+            setFormName('');
+            setFormCurrencyMode('BOTH');
+            setCollaboratorCount(0);
+            setCollaboratorId(null);
             alert('Sistema reseteado (Fallback Manual).');
         } finally {
             setIsResetting(false);
@@ -704,10 +720,24 @@ const OwnerSettings = () => {
                         <button
                             onClick={requestTotalReset}
                             disabled={isResetting}
-                            className="w-full flex items-center justify-center gap-2 text-red-500/70 hover:text-red-500 font-bold text-xs py-3 rounded-xl hover:bg-red-500/10 transition-all"
+                            className="w-full flex items-center justify-center gap-2 text-red-500/70 hover:text-red-500 font-bold text-xs py-3 rounded-xl hover:bg-red-500/10 transition-all mb-4"
                         >
                             <span className="material-icons-round text-sm">delete_forever</span>
                             {isResetting ? 'BORRANDO...' : 'RESETEO TOTAL DE FÁBRICA'}
+                        </button>
+                    </section>
+
+                    {/* 6. Logout */}
+                    <section className="border-t border-slate-700/50 pt-8 opacity-80 hover:opacity-100 transition-opacity">
+                        <button
+                            onClick={async () => {
+                                await signOut();
+                                navigate('/login');
+                            }}
+                            className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white font-bold text-xs py-3 rounded-xl hover:bg-slate-800 transition-all border border-slate-800"
+                        >
+                            <span className="material-icons-round text-sm">logout</span>
+                            CERRAR SESIÓN
                         </button>
                     </section>
 
