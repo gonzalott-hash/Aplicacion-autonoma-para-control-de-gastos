@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import Login from './pages/Login';
-import AuthCallback from './pages/AuthCallback';
 import OwnerSettings from './pages/OwnerSettings';
 import UserExpenseRegistration from './pages/UserExpenseRegistration';
 import OwnerExpenseRegistration from './pages/OwnerExpenseRegistration';
@@ -50,7 +49,6 @@ function App() {
             <ErrorBoundary>
                 <Routes>
                     <Route path="/" element={<Login />} />
-                    <Route path="/auth/callback" element={<AuthCallback />} />
 
                     {/* Owner Routes */}
                     <Route

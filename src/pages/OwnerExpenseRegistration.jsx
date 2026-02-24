@@ -60,7 +60,7 @@ const OwnerExpenseRegistration = () => {
             }
 
             // Expenses
-            const { data: expenseData } = await supabase
+            const { data: expenseData, error: expenseError } = await supabase
                 .from('expenses')
                 .select(`
           *,
@@ -69,7 +69,12 @@ const OwnerExpenseRegistration = () => {
                 .eq('initiative_id', initiativeData.id)
                 .order('created_at', { ascending: false })
                 .limit(10);
-            setExpenses(expenseData || []);
+
+            if (expenseError) {
+                console.error('Database error fetching expenses:', expenseError);
+            } else if (expenseData) {
+                setExpenses(expenseData);
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -338,7 +343,7 @@ const OwnerExpenseRegistration = () => {
                     <div className="flex flex-col gap-6">
                         <div>
                             <h2 className={`text-xl font-bold mb-1 ${isEditMode ? 'text-orange-500' : 'text-slate-900 dark:text-white'}`}>
-                                {isEditMode ? 'Rectificar Gasto' : 'Registrar Nuevo Gasto'}
+                                {isEditMode ? 'Rectificar Gasto' : 'Nuevo Gasto'}
                             </h2>
                         </div>
                         <div className="space-y-4">

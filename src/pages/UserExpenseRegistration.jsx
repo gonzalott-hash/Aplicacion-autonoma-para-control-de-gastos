@@ -23,13 +23,30 @@ const UserExpenseRegistration = () => {
 
     const fetchData = async () => {
         try {
-            // Fetch Active Initiative (Single Source of Truth)
-            const { data: initiativeData } = await supabase.from('initiatives')
-                .select('*')
-                .eq('active', true)
-                .order('created_at', { ascending: false }) // NEWEST
-                .limit(1)
-                .single();
+            let initiativeData = null;
+
+            if (user?.role === 'owner') {
+                const { data } = await supabase.from('initiatives')
+                    .select('*')
+                    .eq('active', true)
+                    .eq('owner_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+                initiativeData = data;
+            } else {
+                // Fetch the initiative this user is a member of
+                const { data: memberData } = await supabase.from('initiative_members')
+                    .select('initiative_id, initiatives(*)')
+                    .eq('user_id', user.id)
+                    .order('added_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (memberData && memberData.initiatives) {
+                    initiativeData = memberData.initiatives;
+                }
+            }
 
             if (initiativeData) {
                 setBalances({
@@ -37,19 +54,22 @@ const UserExpenseRegistration = () => {
                     USD: parseFloat(initiativeData.budget_usd || 0)
                 });
                 setCurrencyMode(initiativeData.currency_mode || 'BOTH');
+
+                // My Expenses for this specific initiative
+                const { data: expenseData } = await supabase
+                    .from('expenses')
+                    .select('*')
+                    .eq('initiative_id', initiativeData.id)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                setMyExpenses(expenseData || []);
+
             } else {
                 setBalances({ PEN: 0, USD: 0 });
                 setCurrencyMode('BOTH');
+                setMyExpenses([]);
             }
 
-            // My Expenses
-            const { data: expenseData } = await supabase
-                .from('expenses')
-                .select('*')
-                .eq('user_id', user?.id)
-                .order('created_at', { ascending: false })
-                .limit(5);
-            setMyExpenses(expenseData || []);
         } catch (error) {
             console.error('Error fetching data', error);
         }
@@ -69,12 +89,29 @@ const UserExpenseRegistration = () => {
         setLoading(true);
         try {
             // Fetch Active Initiative again to ensure fresh data/existence
-            const { data: initiative } = await supabase.from('initiatives')
-                .select('*')
-                .eq('active', true)
-                .order('created_at', { ascending: false }) // NEWEST
-                .limit(1)
-                .single();
+            let initiative = null;
+
+            if (user?.role === 'owner') {
+                const { data } = await supabase.from('initiatives')
+                    .select('*')
+                    .eq('active', true)
+                    .eq('owner_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+                initiative = data;
+            } else {
+                const { data: memberData } = await supabase.from('initiative_members')
+                    .select('initiative_id, initiatives(*)')
+                    .eq('user_id', user.id)
+                    .order('added_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (memberData && memberData.initiatives) {
+                    initiative = memberData.initiatives;
+                }
+            }
 
             if (!initiative) {
                 alert('No hay iniciativa activa para registrar gastos. Contacte al administrador.');
@@ -140,11 +177,6 @@ const UserExpenseRegistration = () => {
         }
     };
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        navigate('/');
-    };
-
     // Helper for formatting time
     const formatTime = (dateString) => {
         const date = new Date(dateString);
@@ -158,9 +190,6 @@ const UserExpenseRegistration = () => {
                     <div>
                         <h1 className="text-xl font-bold tracking-tight">Registro de Gastos</h1>
                         <p className="text-[10px] font-bold text-primary uppercase tracking-widest opacity-80">Usuario Limitado</p>
-                    </div>
-                    <div className="w-9 h-9 rounded-full bg-[#1a2e22] flex items-center justify-center border border-primary/20 cursor-pointer" onClick={handleLogout} title="Cerrar Sesión">
-                        <span className="material-icons-round text-gray-400 hover:text-white transition-colors">logout</span>
                     </div>
                 </header>
 

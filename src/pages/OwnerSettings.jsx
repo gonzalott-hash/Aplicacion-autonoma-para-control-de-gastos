@@ -30,9 +30,12 @@ const OwnerSettings = () => {
     const [inviteModalOpen, setInviteModalOpen] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteLoading, setInviteLoading] = useState(false);
+    const [inviteMessage, setInviteMessage] = useState(null);
 
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordInput, setPasswordInput] = useState('');
+    const [showRevokeModal, setShowRevokeModal] = useState(false);
+    const [revoking, setRevoking] = useState(false);
 
     const navigate = useNavigate();
     const { signOut } = useAuthStore();
@@ -195,7 +198,7 @@ const OwnerSettings = () => {
             setInitiativeName(formName);
             setFormBudgetPen('');
             setFormBudgetUsd('');
-            alert('¡Iniciativa Actualizada Exitosamente!');
+            alert('¡Proyecto Actualizado Exitosamente!');
 
         } catch (error) {
             alert('Error: ' + error.message);
@@ -323,52 +326,61 @@ const OwnerSettings = () => {
     };
 
     const handleInviteUser = async () => {
-        if (!inviteEmail) return alert('Ingrese un email');
+        setInviteMessage(null);
+        if (!inviteEmail) {
+            setInviteMessage({ type: 'error', text: 'Ingrese un email válido' });
+            return;
+        }
+
         setInviteLoading(true);
         try {
-            // 1. Find user by email using Secure RPC
-            const { data: userId, error: rpcError } = await supabase.rpc('get_user_id_by_email', {
-                email_input: inviteEmail
+            // 1. Create invitation via RPC
+            const { error: rpcError } = await supabase.rpc('create_invitation', {
+                p_email: inviteEmail,
+                p_initiative_id: principalInitiativeId
             });
 
             if (rpcError) throw rpcError;
 
-            if (!userId) {
-                alert('Usuario no encontrado. Asegúrese que se haya registrado en la App primero.');
-            } else {
-                // Check if already a member? 
-                // DB constraint might handle it, or we check first.
-                // Let's just try insert, uniqueness constraint should exist if designed well.
-                // If not, we might duplicate. Let's add unique constraint if needed or check.
+            // 2. Send Magic Link
+            const { error: authError } = await supabase.auth.signInWithOtp({
+                email: inviteEmail,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/`,
+                },
+            });
 
-                const { error: insertError } = await supabase
-                    .from('initiative_members')
-                    .insert({ initiative_id: principalInitiativeId, user_id: userId });
-
-                if (insertError) {
-                    if (insertError.code === '23505') { // Unique violation
-                        alert('Este usuario ya es colaborador.');
-                    } else {
-                        throw insertError;
-                    }
-                } else {
-                    alert('Usuario agregado como colaborador.');
-                    setInviteEmail('');
-                    setInviteModalOpen(false);
-                    fetchCollaborators(principalInitiativeId);
+            if (authError) {
+                // Posible rate limiting de Supabase (ej: límite de envíos por hora)
+                if (authError.message.includes('rate limit')) {
+                    throw new Error('Supabase superó el límite de correos gratis por hora. Intenta luego.');
                 }
+                throw authError;
             }
+
+            setInviteMessage({ type: 'success', text: '¡Invitación enviada exitosamente!' });
+            setTimeout(() => {
+                setInviteEmail('');
+                setInviteModalOpen(false);
+                setInviteMessage(null);
+            }, 2500);
+
         } catch (err) {
-            alert('Error invitando: ' + err.message);
+            console.error('Error invitando:', err);
+            setInviteMessage({ type: 'error', text: err.message || 'Error desconocido al invitar' });
         } finally {
             setInviteLoading(false);
         }
     };
 
+    const confirmRevokeCollaborator = () => {
+        if (!collaboratorId) return;
+        setShowRevokeModal(true);
+    };
+
     const handleRevokeCollaborator = async () => {
         if (!collaboratorId) return;
-        if (!confirm('¿Está seguro de eliminar este colaborador?')) return;
-
+        setRevoking(true);
         try {
             const { error } = await supabase
                 .from('initiative_members')
@@ -380,10 +392,13 @@ const OwnerSettings = () => {
 
             setCollaboratorId(null);
             setCollaboratorCount(0);
-            alert('Colaborador eliminado.');
+            setShowRevokeModal(false);
 
         } catch (err) {
+            console.error(err);
             alert('Error eliminando: ' + err.message);
+        } finally {
+            setRevoking(false);
         }
     };
 
@@ -416,6 +431,7 @@ const OwnerSettings = () => {
                             placeholder="BORRAR TODO"
                             value={passwordInput}
                             onChange={(e) => setPasswordInput(e.target.value.toUpperCase())}
+                            onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
                         />
                         <div className="flex gap-3">
                             <button
@@ -441,12 +457,20 @@ const OwnerSettings = () => {
                     <div className="bg-[#1a2e22] border border-primary/20 p-6 rounded-2xl w-full max-w-xs shadow-2xl relative">
                         <h3 className="text-white font-bold text-lg mb-2 text-center">Invitar Colaborador</h3>
                         <p className="text-slate-400 text-xs mb-4 text-center">Ingresa el email del usuario registrado.</p>
+
+                        {inviteMessage && (
+                            <div className={`mb-4 p-3 rounded-xl text-xs font-bold text-center ${inviteMessage.type === 'error' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
+                                {inviteMessage.text}
+                            </div>
+                        )}
+
                         <input
                             type="email"
                             className="w-full bg-[#111c16] border border-primary/10 rounded-xl px-4 py-3 text-white text-sm mb-4 focus:ring-2 focus:ring-primary/50 outline-none placeholder-slate-600 center tracking-wide"
                             placeholder="usuario@email.com"
                             value={inviteEmail}
                             onChange={(e) => setInviteEmail(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleInviteUser()}
                         />
                         <div className="flex gap-3">
                             <button
@@ -470,7 +494,7 @@ const OwnerSettings = () => {
             <div className="w-full max-w-md min-h-screen bg-[#111c16] relative flex flex-col pb-32">
                 <header className="sticky top-0 z-50 bg-[#111c16]/90 backdrop-blur-md px-6 pt-8 pb-4 flex justify-between items-center border-b border-primary/5">
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight text-white">Ajustes del propietario</h1>
+                        <h1 className="text-xl font-bold tracking-tight text-white">Configuración</h1>
                         <p className="text-sm font-bold text-primary mt-1">{initiativeName || 'Cargando...'}</p>
                     </div>
                     <Link
@@ -488,7 +512,7 @@ const OwnerSettings = () => {
                     <section>
                         <div className="flex items-center gap-2 mb-3">
                             <span className="material-icons-round text-primary text-sm">edit_note</span>
-                            <h2 className="text-xs font-bold uppercase tracking-widest text-primary/80">Establecer Iniciativa</h2>
+                            <h2 className="text-xs font-bold uppercase tracking-widest text-primary/80">Establecer Proyecto</h2>
                         </div>
 
                         <div className="bg-[#1a2e22] rounded-2xl p-5 border border-primary/10 shadow-lg space-y-5 relative">
@@ -565,7 +589,7 @@ const OwnerSettings = () => {
                                 className="w-full bg-gradient-to-r from-primary to-emerald-400 hover:opacity-90 text-[#111c16] font-black py-4 rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
                             >
                                 <span className="material-icons-round text-lg">{updatingInitiative ? 'hourglass_empty' : 'rocket_launch'}</span>
-                                {updatingInitiative ? 'PROCESANDO...' : 'ESTABLECER INICIATIVA'}
+                                {updatingInitiative ? 'PROCESANDO...' : 'ESTABLECER PROYECTO'}
                             </button>
                         </div>
                     </section>
@@ -600,9 +624,10 @@ const OwnerSettings = () => {
                             <button
                                 onClick={handleInjectFunds}
                                 disabled={injectingFunds}
-                                className="w-full bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 font-bold py-3 rounded-xl hover:bg-emerald-500 hover:text-[#111c16] transition-all disabled:opacity-50"
+                                className="w-full bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 font-bold py-3 rounded-xl hover:bg-emerald-500 hover:text-[#111c16] transition-all disabled:opacity-50 flex flex-col items-center justify-center gap-0.5"
                             >
-                                {injectingFunds ? 'PROCESANDO...' : 'AGREGAR FONDOS'}
+                                <span>{injectingFunds ? 'PROCESANDO...' : 'AGREGAR FONDOS'}</span>
+                                <span className="text-[10px] font-normal opacity-70">AL MONTO INICIAL</span>
                             </button>
                         </div>
                     </section>
@@ -642,7 +667,7 @@ const OwnerSettings = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={handleRevokeCollaborator}
+                                    onClick={confirmRevokeCollaborator}
                                     className="text-[10px] font-bold text-red-400 hover:text-red-500 hover:underline"
                                 >
                                     REVOCAR
@@ -688,6 +713,33 @@ const OwnerSettings = () => {
 
                 </main>
             </div>
+
+            {/* Modal de Revocar Colaborador */}
+            {showRevokeModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
+                    <div className="bg-[#1a2e22] border border-orange-500/20 p-6 rounded-2xl w-full max-w-xs shadow-2xl relative">
+                        <h3 className="text-white font-bold text-lg mb-2 text-center text-orange-400">Revocar Acceso</h3>
+                        <p className="text-slate-400 text-xs mb-4 text-center">
+                            El colaborador dejará de tener acceso a los fondos inmediatamente.
+                        </p>
+                        <div className="flex gap-3 mt-4">
+                            <button
+                                onClick={() => setShowRevokeModal(false)}
+                                className="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700 transition"
+                            >
+                                CANCELAR
+                            </button>
+                            <button
+                                onClick={handleRevokeCollaborator}
+                                disabled={revoking}
+                                className="flex-1 py-3 rounded-xl bg-orange-500/10 border border-orange-500/50 text-orange-400 font-bold text-xs hover:bg-orange-500 hover:text-white transition disabled:opacity-50"
+                            >
+                                {revoking ? 'REVOCANDO...' : 'REVOCAR'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
