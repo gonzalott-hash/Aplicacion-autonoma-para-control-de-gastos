@@ -8,93 +8,102 @@ export const useAuthStore = create((set, get) => ({
     hasInitiative: false, // New state for redirection logic
     loading: true,
     initialized: false,
+    initializing: false,
 
     initialize: async () => {
-        if (get().initialized) return;
-        console.log("AuthStore: initialize called");
+        if (get().initialized || get().initializing) return;
+        console.log("AuthStore: initialize started");
+        set({ initializing: true });
+
         try {
             const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            console.log("AuthStore: getSession result", { session, error: sessionError });
+            console.log("AuthStore: getSession result", { hasSession: !!session, error: sessionError });
 
             let role = null;
             let hasInitiative = false;
 
             if (session?.user) {
-                console.log("AuthStore: Fetching profile for user", session.user.id);
-                try {
-                    const { data: profile, error: profileError } = await supabase
-                        .from('profiles')
-                        .select('role')
-                        .eq('id', session.user.id)
-                        .maybeSingle(); // Changed to maybeSingle to avoid 406 on no rows (though profile should exist)
+                const profileData = await get().fetchProfileWithRetry(session.user.id);
+                role = profileData.role;
+                hasInitiative = profileData.hasInitiative;
+            }
 
-                    if (profileError) console.error("AuthStore: Profile error", profileError);
-                    console.log("AuthStore: Profile result", profile);
-                    role = profile?.role;
+            set({
+                session,
+                user: session?.user ?? null,
+                role,
+                hasInitiative,
+                loading: false,
+                initialized: true,
+                initializing: false
+            });
 
-                    // If owner, check for initiative
-                    if (role === 'owner') {
-                        const { data: initiative, error: initError } = await supabase
+            // Set up listener
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                console.log("AuthStore: 🔔 onAuthStateChange EVENT:", event, "User:", session?.user?.id);
+
+                if (event === 'SIGNED_OUT') {
+                    set({ session: null, user: null, role: null, hasInitiative: false, loading: false });
+                    return;
+                }
+
+                if (session?.user) {
+                    const profileData = await get().fetchProfileWithRetry(session.user.id);
+                    set({
+                        session,
+                        user: session.user,
+                        role: profileData.role,
+                        hasInitiative: profileData.hasInitiative,
+                        loading: false
+                    });
+                } else {
+                    set({ session: null, user: null, role: null, hasInitiative: false, loading: false });
+                }
+            });
+        } catch (error) {
+            console.error('AuthStore: Error initializing auth:', error);
+            set({ loading: false, initializing: false, initialized: true });
+        }
+    },
+
+    fetchProfileWithRetry: async (userId, retries = 3) => {
+        console.log(`AuthStore: Fetching profile for user ${userId}, attempt ${4 - retries}`);
+        for (let i = 0; i < retries; i++) {
+            try {
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', userId)
+                    .maybeSingle();
+
+                if (profileError) throw profileError;
+
+                if (profile) {
+                    let hasInitiative = false;
+                    if (profile.role === 'owner') {
+                        const { data: initiative } = await supabase
                             .from('initiatives')
                             .select('id')
                             .eq('active', true)
-                            .eq('owner_id', session.user.id)
+                            .eq('owner_id', userId)
                             .order('created_at', { ascending: false })
                             .limit(1)
                             .maybeSingle();
-
-                        if (initError) console.error("AuthStore: Initiative check error", initError);
-                        if (initiative) {
-                            hasInitiative = true;
-                        }
-                        console.log("AuthStore: Initiative check", { hasInitiative });
+                        if (initiative) hasInitiative = true;
                     }
-
-                } catch (e) {
-                    console.error("AuthStore: Unexpected error fetching profile/initiative", e);
+                    console.log("AuthStore: Profile found", { role: profile.role, hasInitiative });
+                    return { role: profile.role, hasInitiative };
                 }
-            } else {
-                console.log("AuthStore: No session found");
+
+                console.warn(`AuthStore: Profile not found for ${userId}, retrying in 1.5s... (${i + 1}/${retries})`);
+                await new Promise(res => setTimeout(res, 1500));
+            } catch (e) {
+                console.error("AuthStore: Error fetching profile", e);
+                await new Promise(res => setTimeout(res, 1000));
             }
-
-            set({ session, user: session?.user ?? null, role, hasInitiative, loading: false, initialized: true });
-            console.log("AuthStore: State updated", { user: session?.user?.id, role, hasInitiative });
-
-            // Remove existing listener if any? (Not implemented here, but good practice usually)
-            supabase.auth.onAuthStateChange(async (event, session) => {
-                console.log("AuthStore: 🔔 onAuthStateChange EVENT:", event, "User:", session?.user?.id);
-                let role = null;
-                let hasInitiative = false;
-
-                if (session?.user) {
-                    try {
-                        const { data: profile } = await supabase
-                            .from('profiles')
-                            .select('role')
-                            .eq('id', session.user.id)
-                            .maybeSingle();
-                        role = profile?.role;
-
-                        if (role === 'owner') {
-                            const { data: initiative } = await supabase
-                                .from('initiatives')
-                                .select('id')
-                                .eq('active', true)
-                                .eq('owner_id', session.user.id)
-                                .limit(1)
-                                .maybeSingle();
-                            if (initiative) hasInitiative = true;
-                        }
-                    } catch (e) {
-                        console.error("AuthStore: Auth change profile fetch error", e);
-                    }
-                }
-                set({ session, user: session?.user ?? null, role, hasInitiative, loading: false, initialized: true }); // Ensure loading is false on change
-            });
-        } catch (error) {
-            console.error('Error initializing auth:', error);
-            set({ loading: false });
         }
+        console.error("AuthStore: Failed to fetch profile after retries");
+        return { role: null, hasInitiative: false };
     },
 
     signIn: async (email, password) => {

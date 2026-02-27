@@ -423,7 +423,6 @@ const OwnerSettings = () => {
             <div className="flex items-center justify-center min-h-screen bg-[#111c16] text-primary font-display">
                 <div className="text-center space-y-4">
                     <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
-                    <p className="animate-pulse text-sm font-bold tracking-widest">CARGANDO AJUSTES...</p>
                 </div>
             </div>
         );
@@ -511,7 +510,7 @@ const OwnerSettings = () => {
                 <header className="sticky top-0 z-50 bg-[#111c16]/90 backdrop-blur-md px-6 pt-8 pb-4 flex justify-between items-center border-b border-primary/5">
                     <div>
                         <h1 className="text-xl font-bold tracking-tight text-white">Configuración</h1>
-                        <p className="text-sm font-bold text-primary mt-1">{initiativeName || 'Cargando...'}</p>
+                        <p className="text-sm font-bold text-primary mt-1">{initiativeName || ''}</p>
                     </div>
                     <Link
                         to="/owner-expense"
@@ -528,14 +527,14 @@ const OwnerSettings = () => {
                     <section>
                         <div className="flex items-center gap-2 mb-3">
                             <span className="material-icons-round text-primary text-sm">edit_note</span>
-                            <h2 className="text-xs font-bold uppercase tracking-widest text-primary/80">Establecer Proyecto</h2>
+                            <h2 className="text-xs font-bold uppercase tracking-widest text-primary/80">Preparación del proyecto</h2>
                         </div>
 
                         <div className="bg-[#1a2e22] rounded-2xl p-5 border border-primary/10 shadow-lg space-y-5 relative">
                             <div>
                                 <label className="block text-[10px] font-bold uppercase tracking-wide text-white/50 mb-2 pl-1">Nombre del Proyecto</label>
                                 <input
-                                    className="w-full bg-[#111c16] border border-primary/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-white placeholder-slate-600"
+                                    className="w-full bg-[#111c16] border border-primary/10 rounded-xl px-4 py-3 text-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-white placeholder-slate-600 font-bold"
                                     placeholder="Nombre del Proyecto"
                                     type="text"
                                     value={formName}
@@ -545,7 +544,7 @@ const OwnerSettings = () => {
 
                             {/* CURRENCY MODE SELECTOR */}
                             <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-wide text-white/50 mb-2 pl-1">Tipo de Moneda</label>
+                                <label className="block text-[10px] font-bold uppercase tracking-wide text-white/50 mb-2 pl-1">Moneda</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     <button
                                         onClick={() => setFormCurrencyMode('PEN')}
@@ -605,7 +604,7 @@ const OwnerSettings = () => {
                                 className="w-full bg-gradient-to-r from-primary to-emerald-400 hover:opacity-90 text-[#111c16] font-black py-4 rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
                             >
                                 <span className="material-icons-round text-lg">{updatingInitiative ? 'hourglass_empty' : 'rocket_launch'}</span>
-                                {updatingInitiative ? 'PROCESANDO...' : 'ESTABLECER PROYECTO'}
+                                {updatingInitiative ? 'PROCESANDO...' : 'PREPARACIÓN DEL PROYECTO'}
                             </button>
                         </div>
                     </section>
@@ -732,7 +731,7 @@ const OwnerSettings = () => {
                         <button
                             onClick={async () => {
                                 await signOut();
-                                navigate('/login');
+                                navigate('/');
                             }}
                             className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white font-bold text-xs py-3 rounded-xl hover:bg-slate-800 transition-all border border-slate-800"
                         >

@@ -15,11 +15,37 @@ const Login = () => {
     // Check for existing session and handle Smart Redirection
     // We now rely on the authStore to have updated 'user', 'role', and 'hasInitiative'
     const { user, role, hasInitiative, loading: authLoading, initialize } = useAuthStore();
+    const [setupTimeout, setSetupTimeout] = useState(false);
+
+    // Catch OAuth errors from URL
+    useEffect(() => {
+        const hash = window.location.hash;
+        if (hash.includes('error=')) {
+            const params = new URLSearchParams(hash.substring(1));
+            const errorMsg = params.get('error_description') || params.get('error') || 'Error en la autenticación con Google';
+            setError(decodeURIComponent(errorMsg.replace(/\+/g, ' ')));
+            // Clear hash
+            window.history.replaceState(null, null, window.location.pathname);
+        }
+    }, []);
 
     useEffect(() => {
         // Initialize auth store if not already loaded
         initialize();
     }, []);
+
+    useEffect(() => {
+        let timer;
+        if (user && role === null && !authLoading) {
+            // If user is logged in but role is null, set a safety timeout
+            timer = setTimeout(() => {
+                setSetupTimeout(true);
+            }, 6000);
+        } else {
+            setSetupTimeout(false);
+        }
+        return () => clearTimeout(timer);
+    }, [user, role, authLoading]);
 
     useEffect(() => {
         if (!authLoading && user) {
@@ -72,13 +98,34 @@ const Login = () => {
         }
     };
 
-    if (authLoading) {
+    if (authLoading || (user && role === null)) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display">
-                <div className="flex flex-col items-center gap-6 animate-pulse">
-                    <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                <div className="flex flex-col items-center gap-6">
+                    <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center relative">
                         <span className="material-icons-round text-primary text-3xl animate-spin">sync</span>
                     </div>
+
+                    <div className="text-center space-y-2">
+                        <p className="text-lg font-bold">
+                            {setupTimeout ? 'Casi listo...' : 'Iniciando sesión...'}
+                        </p>
+                        <p className="text-sm text-slate-500 max-w-xs mx-auto animate-pulse">
+                            {setupTimeout
+                                ? 'La base de datos está terminando de configurar tu perfil. Por favor, espera un momento.'
+                                : 'Estamos verificando tus credenciales y preparando tu espacio.'}
+                        </p>
+                    </div>
+
+                    {setupTimeout && (
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="mt-4 text-primary text-sm font-semibold hover:underline flex items-center gap-2"
+                        >
+                            <span className="material-icons-round text-sm">refresh</span>
+                            ¿Tarda demasiado? Reintentar
+                        </button>
+                    )}
                 </div>
             </div>
         );
@@ -95,13 +142,10 @@ const Login = () => {
                     <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/20 rounded-2xl mb-6">
                         <span className="material-icons-round text-primary text-5xl">account_balance_wallet</span>
                     </div>
-                    <h1 className="text-3xl font-extrabold tracking-tight dark:text-white mb-2">Bienvenido</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">
-                        Ingrese su correo para recibir un enlace de acceso seguro.
-                    </p>
+                    <h1 className="text-3xl font-extrabold tracking-tight dark:text-white mb-2">Gestor de presupuestos</h1>
                 </div>
 
-                <form className="space-y-5" onSubmit={handleLogin}>
+                <div className="space-y-6">
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/50 text-red-500 text-sm p-3 rounded-xl text-center">
                             {error}
@@ -145,43 +189,39 @@ const Login = () => {
                             Acceder con Google
                         </button>
 
-                        <div className="relative py-4">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-slate-200 dark:border-neutral-border"></div>
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase tracking-widest">
-                                <span className="bg-background-light dark:bg-background-dark px-4 text-slate-500">O usa tu correo</span>
-                            </div>
+                        <div className="text-center py-2">
+                            <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">
+                                o<br />
+                                Ingrese su correo para recibir un enlace de acceso seguro
+                            </p>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1" htmlFor="email">
-                                Correo electrónico
-                            </label>
-                            <div className="relative group">
-                                <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">mail</span>
-                                <input
-                                    className="w-full pl-12 pr-4 py-4 bg-white dark:bg-neutral-dark border-transparent dark:border-neutral-border focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary rounded-xl transition-all outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
-                                    id="email"
-                                    placeholder="usuario@dominio.com"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
+                        <form className="space-y-4" onSubmit={handleLogin}>
+                            <div className="space-y-2">
+                                <div className="relative group">
+                                    <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">mail</span>
+                                    <input
+                                        className="w-full pl-12 pr-4 py-4 bg-white dark:bg-neutral-dark border-transparent dark:border-neutral-border focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary rounded-xl transition-all outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400"
+                                        id="email"
+                                        placeholder="correo electrónico"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        <button
-                            className="w-full bg-primary hover:bg-primary/90 text-background-dark font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                            type="submit"
-                            disabled={loading}
-                        >
-                            {loading ? 'Enviando enlace...' : 'Recibir acceso por email'}
-                        </button>
+                            <button
+                                className="w-full bg-primary hover:bg-primary/90 text-background-dark font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                                type="submit"
+                                disabled={loading}
+                            >
+                                {loading ? 'Enviando enlace...' : 'Recibir acceso por email'}
+                            </button>
+                        </form>
                     </div>
-
-                </form>
+                </div>
 
                 <div className="relative my-8">
                     <div className="absolute inset-0 flex items-center">
