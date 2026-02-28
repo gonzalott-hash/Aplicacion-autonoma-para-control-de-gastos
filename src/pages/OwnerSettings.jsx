@@ -532,9 +532,9 @@ const OwnerSettings = () => {
 
                         <div className="bg-[#1a2e22] rounded-2xl p-5 border border-primary/10 shadow-lg space-y-5 relative">
                             <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-wide text-white/50 mb-2 pl-1">Nombre del Proyecto</label>
+                                <label className="block text-[16px] font-bold uppercase tracking-wide text-white/50 mb-2 pl-1">Nombre del Proyecto</label>
                                 <input
-                                    className="w-full bg-[#111c16] border border-primary/10 rounded-xl px-4 py-3 text-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-white placeholder-slate-600 font-bold"
+                                    className="w-full bg-slate-700 border border-primary/10 rounded-xl px-4 py-3 text-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-white placeholder:text-xs placeholder-slate-400 font-bold"
                                     placeholder="Nombre del Proyecto"
                                     type="text"
                                     value={formName}
@@ -544,7 +544,7 @@ const OwnerSettings = () => {
 
                             {/* CURRENCY MODE SELECTOR */}
                             <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-wide text-white/50 mb-2 pl-1">Moneda</label>
+                                <label className="block text-[16px] font-bold uppercase tracking-wide text-white/50 mb-2 pl-1">Moneda</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     <button
                                         onClick={() => setFormCurrencyMode('PEN')}
@@ -569,11 +569,11 @@ const OwnerSettings = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className={formCurrencyMode === 'USD' ? 'opacity-30 pointer-events-none grayscale' : ''}>
-                                    <label className="block text-[10px] font-bold uppercase tracking-wide text-white/50 mb-2 pl-1">Monto Inicial (Soles)</label>
+                                    <label className="block text-[16px] font-bold uppercase tracking-wide text-white/50 mb-2 pl-1">Monto Inicial (S/.)</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">S/.</span>
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-300">S/.</span>
                                         <input
-                                            className="w-full bg-[#111c16] border border-primary/10 rounded-xl pl-9 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-white placeholder-slate-700 font-bold"
+                                            className="w-full bg-slate-700 border border-primary/10 rounded-xl pl-9 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-white placeholder-slate-400 font-bold"
                                             placeholder="0.00"
                                             type="number"
                                             value={formBudgetPen}
@@ -583,11 +583,11 @@ const OwnerSettings = () => {
                                     </div>
                                 </div>
                                 <div className={formCurrencyMode === 'PEN' ? 'opacity-30 pointer-events-none grayscale' : ''}>
-                                    <label className="block text-[10px] font-bold uppercase tracking-wide text-primary/50 mb-2 pl-1">Monto Inicial (Dólares)</label>
+                                    <label className="block text-[16px] font-bold uppercase tracking-wide text-primary/50 mb-2 pl-1">Monto Inicial ($)</label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary/70">$</span>
                                         <input
-                                            className="w-full bg-[#111c16] border border-primary/10 rounded-xl pl-8 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-primary placeholder-primary/30 font-bold"
+                                            className="w-full bg-slate-700 border border-primary/10 rounded-xl pl-8 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none text-primary placeholder-primary/50 font-bold"
                                             placeholder="0.00"
                                             type="number"
                                             value={formBudgetUsd}
@@ -621,15 +621,15 @@ const OwnerSettings = () => {
                                     <select
                                         value={injectionCurrency}
                                         onChange={(e) => setInjectionCurrency(e.target.value)}
-                                        className="w-full bg-[#111c16] border border-primary/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 text-white appearance-none h-full font-bold"
+                                        className="w-full bg-slate-700 border border-primary/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 text-white appearance-none h-full font-bold"
                                     >
                                         <option value="PEN">Soles (S/.)</option>
                                         <option value="USD">Dólares ($)</option>
                                     </select>
-                                    <span className="material-icons-round absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none text-sm">expand_more</span>
+                                    <span className="material-icons-round absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none text-sm">expand_more</span>
                                 </div>
                                 <input
-                                    className="w-full bg-[#111c16] border border-primary/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 text-white placeholder-slate-600 font-bold"
+                                    className="w-full bg-slate-700 border border-primary/10 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/50 text-white placeholder-slate-400 font-bold"
                                     placeholder="0.00"
                                     type="number"
                                     value={injectionAmount}

@@ -351,7 +351,7 @@ const OwnerExpenseRegistration = () => {
                                 <label className="text-sm font-semibold text-slate-600 dark:text-slate-300 ml-1">Concepto</label>
                                 <div className="relative">
                                     <input
-                                        className="w-full h-14 px-4 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 dark:placeholder:text-slate-600 font-medium"
+                                        className="w-full h-14 px-4 rounded-xl border-none bg-slate-700 focus:ring-2 focus:ring-primary placeholder:text-slate-400 dark:placeholder:text-slate-400 font-medium text-white"
                                         type="text"
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
@@ -364,9 +364,9 @@ const OwnerExpenseRegistration = () => {
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 ml-1">Monto Soles (PEN)</label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">S/</span>
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-300">S/</span>
                                             <input
-                                                className="w-full h-14 pl-9 pr-3 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 dark:text-white font-bold text-lg"
+                                                className="w-full h-14 pl-9 pr-3 rounded-xl border-none bg-slate-700 focus:ring-2 focus:ring-primary placeholder:text-slate-400 text-white font-bold text-lg"
                                                 placeholder="0.00"
                                                 type="number"
                                                 step="0.01"
@@ -383,7 +383,7 @@ const OwnerExpenseRegistration = () => {
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-primary/70">$</span>
                                             <input
-                                                className="w-full h-14 pl-7 pr-3 rounded-xl border-none bg-slate-200/50 dark:bg-slate-800/50 focus:ring-2 focus:ring-primary placeholder:text-slate-400 text-primary font-bold text-lg"
+                                                className="w-full h-14 pl-7 pr-3 rounded-xl border-none bg-slate-700 focus:ring-2 focus:ring-primary placeholder:text-primary/50 text-primary font-bold text-lg"
                                                 placeholder="0.00"
                                                 type="number"
                                                 step="0.01"
