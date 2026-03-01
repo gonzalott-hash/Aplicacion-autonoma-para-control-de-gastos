@@ -604,7 +604,7 @@ const OwnerSettings = () => {
                                 className="w-full bg-gradient-to-r from-primary to-emerald-400 hover:opacity-90 text-[#111c16] font-black py-4 rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
                             >
                                 <span className="material-icons-round text-lg">{updatingInitiative ? 'hourglass_empty' : 'rocket_launch'}</span>
-                                {updatingInitiative ? 'PROCESANDO...' : 'PREPARACIÓN DEL PROYECTO'}
+                                {updatingInitiative ? 'PROCESANDO...' : 'ACTIVAR PROYECTO'}
                             </button>
                         </div>
                     </section>
