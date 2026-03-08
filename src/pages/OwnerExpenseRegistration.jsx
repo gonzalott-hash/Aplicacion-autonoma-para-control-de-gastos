@@ -15,6 +15,8 @@ const OwnerExpenseRegistration = () => {
     const [description, setDescription] = useState('');
     const [amountPen, setAmountPen] = useState('');
     const [amountUsd, setAmountUsd] = useState('');
+    const [showCategoriesUI, setShowCategoriesUI] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState('general');
 
     // Edit Mode State
     const [isEditMode, setIsEditMode] = useState(false);
@@ -52,6 +54,7 @@ const OwnerExpenseRegistration = () => {
                 });
                 setCurrencyMode(initiativeData.currency_mode || 'BOTH');
                 setInitiativeName(initiativeData.name); // Set name
+                setShowCategoriesUI(initiativeData.show_categories || false);
             } else {
                 // If no initiative exists, redirect to settings to create one
                 // alert('No se encontró una cuenta activa. Redirigiendo a configuración...');
@@ -89,6 +92,7 @@ const OwnerExpenseRegistration = () => {
         setIsEditMode(false);
         setEditingExpense(null);
         setTempExpenseToEdit(null);
+        setSelectedCategory('general');
     };
 
     const handleRegisterExpense = async () => {
@@ -171,7 +175,8 @@ const OwnerExpenseRegistration = () => {
                 const { error: updateError } = await supabase.from('expenses').update({
                     description,
                     amount: pen > 0 ? pen : usd,
-                    currency: pen > 0 ? 'PEN' : 'USD'
+                    currency: pen > 0 ? 'PEN' : 'USD',
+                    category: showCategoriesUI ? selectedCategory : (editingExpense.category || 'general')
                 }).eq('id', editingExpense.id);
 
                 if (updateError) throw updateError;
@@ -187,7 +192,7 @@ const OwnerExpenseRegistration = () => {
                     description,
                     amount: pen,
                     currency: 'PEN',
-                    category: 'general',
+                    category: showCategoriesUI ? selectedCategory : 'general',
                     initiative_id: targetInit.id,
                     owner_id: user.id
                 });
@@ -196,7 +201,7 @@ const OwnerExpenseRegistration = () => {
                     description,
                     amount: usd,
                     currency: 'USD',
-                    category: 'general',
+                    category: showCategoriesUI ? selectedCategory : 'general',
                     initiative_id: targetInit.id,
                     owner_id: user.id
                 });
@@ -261,6 +266,9 @@ const OwnerExpenseRegistration = () => {
 
         setEditingExpense(expense);
         setIsEditMode(true);
+        if (showCategoriesUI) {
+            setSelectedCategory(expense.category || 'general');
+        }
 
         // Scroll to Form
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -359,6 +367,27 @@ const OwnerExpenseRegistration = () => {
                                     />
                                 </div>
                             </div>
+
+                            {/* CONDITIONAL CATEGORY SELECTOR */}
+                            {showCategoriesUI && (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <label className="text-sm font-semibold text-orange-400 ml-1 flex items-center gap-1">
+                                        <span className="material-icons-round text-sm">category</span>
+                                        Categoría (Edición Especial)
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {['general', 'comida', 'transporte', 'servicios', 'limpieza', 'otros'].map((cat) => (
+                                            <button
+                                                key={cat}
+                                                onClick={() => setSelectedCategory(cat)}
+                                                className={`py-3 rounded-xl text-[10px] font-bold uppercase transition-all border ${selectedCategory === cat ? 'bg-orange-500 text-white border-orange-400 shadow-lg shadow-orange-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}`}
+                                            >
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             <div className={`grid ${currencyMode === 'BOTH' ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
                                 {(currencyMode === 'PEN' || currencyMode === 'BOTH') && (
                                     <div className="space-y-2">
@@ -439,6 +468,11 @@ const OwnerExpenseRegistration = () => {
                                             }`}>
                                             {item.category === 'INGRESO' ? '+' : '-'}{item.currency === 'USD' ? '$' : 'S/'} {item.amount}
                                         </span>
+                                        {showCategoriesUI && item.category !== 'INGRESO' && (
+                                            <span className="text-[10px] font-bold text-orange-400/60 uppercase px-2 py-1 bg-orange-500/5 border border-orange-500/10 rounded-md">
+                                                {item.category}
+                                            </span>
+                                        )}
                                         <button
                                             onClick={() => handleEditClick(item)}
                                             className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-orange-500 hover:bg-orange-500/10 flex items-center justify-center transition-all"

@@ -25,6 +25,7 @@ const OwnerSettings = () => {
 
     const [injectionAmount, setInjectionAmount] = useState('');
     const [injectionCurrency, setInjectionCurrency] = useState('PEN');
+    const [showCategories, setShowCategories] = useState(false);
 
     // Modals
     const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -105,6 +106,7 @@ const OwnerSettings = () => {
 
             setPrincipalInitiativeId(pId);
             setInitiativeName(currentName);
+            setShowCategories(initiatives[0]?.show_categories || false);
             setFormName('');
             setFormCurrencyMode(currentMode);
 
@@ -150,7 +152,8 @@ const OwnerSettings = () => {
                 .from('initiatives')
                 .update({
                     name: formName,
-                    currency_mode: formCurrencyMode
+                    currency_mode: formCurrencyMode,
+                    show_categories: showCategories
                 })
                 .eq('id', principalInitiativeId);
 
@@ -606,6 +609,17 @@ const OwnerSettings = () => {
                                 <span className="material-icons-round text-lg">{updatingInitiative ? 'hourglass_empty' : 'rocket_launch'}</span>
                                 {updatingInitiative ? 'PROCESANDO...' : 'ACTIVAR PROYECTO'}
                             </button>
+
+                            {/* SPECIAL EDITION: CATEGORIES TOGGLE */}
+                            <div className="pt-4 border-t border-primary/5">
+                                <button
+                                    onClick={() => setShowCategories(!showCategories)}
+                                    className={`w-full py-3 rounded-xl text-[10px] font-bold tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${showCategories ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-slate-800/50 text-slate-500 border border-slate-700'}`}
+                                >
+                                    <span className="material-icons-round text-sm">{showCategories ? 'visibility' : 'visibility_off'}</span>
+                                    {showCategories ? 'EDICIÓN ESPECIAL: CATEGORÍAS ACTIVAS' : 'ACTIVAR EDICIÓN ESPECIAL (CATEGORÍAS)'}
+                                </button>
+                            </div>
                         </div>
                     </section>
 
